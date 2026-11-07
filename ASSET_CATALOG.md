@@ -11,8 +11,8 @@ Pipeline: `tools/assets/gen_<slug>.py` -> `assets/models/<category>/<slug>.glb` 
 - [ ] `env_sacred_world_tree_canopy` (>= 9,000 tris)
 
 ## 2. Characters (`assets/models/characters/`)
-- [ ] `chr_hero_kaelen_adventurer` (>= 10,000 tris)
-- [ ] `chr_ally_lumina_spirit_fairy` (>= 3,500 tris)
+- [x] `chr_hero_kaelen_adventurer` (>= 10,000 tris)
+- [x] `chr_ally_lumina_spirit_fairy` (>= 3,500 tris)
 - [ ] `chr_ally_sylphie_elf_mage` (>= 10,000 tris)
 - [ ] `chr_ally_garrick_royal_paladin` (>= 10,000 tris)
 - [ ] `chr_ally_lyra_beastkin_rogue` (>= 9,500 tris)
@@ -47,7 +47,7 @@ Pipeline: `tools/assets/gen_<slug>.py` -> `assets/models/<category>/<slug>.glb` 
 
 ## 7. Weapons (`assets/models/weapons/`)
 - [x] `wpn_aetherblade_longsword` (>= 4,000 tris)
-- [ ] `wpn_royal_crest_heater_shield` (>= 3,500 tris)
+- [x] `wpn_royal_crest_heater_shield` (>= 3,500 tris)
 - [ ] `wpn_archmage_celestial_staff` (>= 4,500 tris)
 - [ ] `wpn_elven_wind_recurve_bow` (>= 3,500 tris)
 - [ ] `wpn_dwarven_runic_warhammer` (>= 4,000 tris)
