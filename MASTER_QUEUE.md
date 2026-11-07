@@ -11,7 +11,7 @@
   - Rebuild `chr_hero_kaelen_adventurer.glb`, `chr_ally_garrick_royal_paladin.glb`, `mon_orc_warlord_berserker.glb`, `mon_shadow_direwolf_alpha.glb`, and `mon_forest_goblin_raider.glb` in **real Blender (`bpy`)** using `MIRROR` + `SUBSURF` + `SOLIDIFY` armor/cloth modeling and separate named limb objects (`torso`, `head`, `cloak`, `arm_l`, `arm_r`, `leg_l`, `leg_r`, `weapon_r`, `jaw`, `tail`).
   - Update `include/isekai/model.h`, `src/gltf_loader.cpp`, and `src/animator.hpp` so `cgltf` preserves each node's `partId` and pivot, animating Idle, Walk/Sprint, 3-Hit Sword Combo, Magic Cast, Dodge Roll, and Monster gait/attacks.
 
-- [ ] **Q03 — Remaster Valoria Guildhall, Citadel Keep, Merchant Wagon, Longsword, Shield & Props in Real Blender (`bpy`)**
+- [x] **Q03 — Remaster Valoria Guildhall, Citadel Keep, Merchant Wagon, Longsword, Shield & Props in Real Blender (`bpy`)**
   - Rebuild `bld_valoria_adventurer_guild.glb`, `bld_royal_citadel_keep.glb`, `veh_merchant_covered_wagon.glb`, `wpn_aetherblade_longsword.glb`, `wpn_royal_crest_heater_shield.glb`, `prp_ornate_treasure_chest.glb`, and `prp_wooden_wayfinder_signpost.glb` in **real Blender (`bpy`)** with beveled stone arches, arrayed slate roof tiles, timber framing, spoked wheels, draped canvas ribs, and full Smart UV unwrapping.
 
 - [x] **Q04 — Offscreen HDR Framebuffer: Screen-Space Ambient Occlusion (SSAO), Dual-Pass Bloom & Golden-Hour Atmospheric Scattering**
