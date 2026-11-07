@@ -25,8 +25,8 @@ void GameWorld::loadAll(const std::string& root) {
     if (!sw->prims.empty()) { h.prims = body; models["hero_sword_part"] = std::move(sw); }
     Vec3 lo{1e9f, 1e9f, 1e9f}, hi{-1e9f, -1e9f, -1e9f}; for (auto& p : h.prims) for (auto& v : p.pos) { lo = {std::min(lo.x, v.x), std::min(lo.y, v.y), std::min(lo.z, v.z)}; hi = {std::max(hi.x, v.x), std::max(hi.y, v.y), std::max(hi.z, v.z)}; } h.bmin = lo; h.bmax = hi; }
   auto ph = [&](const char* k, Vec3 half, Vec3 c, Vec3 col) { if (!models.count(k)) models[k] = std::make_unique<Model>(makeBoxModel(half, c, col)); };
-  ph("hero", {.3f, .9f, .2f}, {0, .9f, 0}, {.12f, .14f, .3f}); ph("paladin", {.4f, 1.f, .3f}, {0, 1.f, 0}, {.6f, .6f, .65f}); ph("guild", {6.f, 5.f, 5.f}, {0, 5.f, 0}, {.5f, .42f, .32f});
-  ph("keep", {10.f, 12.f, 6.f}, {0, 12.f, 0}, {.5f, .5f, .48f}); ph("wagon", {1.1f, 1.3f, 2.2f}, {0, 1.3f, 0}, {.45f, .33f, .2f}); ph("orc", {.7f, 1.4f, .5f}, {0, 1.4f, 0}, {.3f, .4f, .2f});
+  ph("hero", {.3f, .9f, .2f}, {0, .9f, 0}, {.12f, .14f, .3f}); ph("paladin", {.4f, 1.f, .3f}, {0, 1.f, 0}, {.6f, .6f, .65f}); ph("guild", {7.5f, 5.f, 5.5f}, {0, 5.f, 0}, {.5f, .42f, .32f});
+  ph("keep", {18.f, 12.f, 8.f}, {0, 12.f, 0}, {.5f, .5f, .48f}); ph("wagon", {1.1f, 1.3f, 2.2f}, {0, 1.3f, 0}, {.45f, .33f, .2f}); ph("orc", {.7f, 1.4f, .5f}, {0, 1.4f, 0}, {.3f, .4f, .2f});
   ph("wolf", {.5f, .65f, 1.f}, {0, .65f, 0}, {.12f, .12f, .15f}); ph("goblin", {.35f, .6f, .3f}, {0, .6f, 0}, {.35f, .5f, .15f}); ph("cliff", {4.f, 3.f, 6.f}, {0, 3.f, 0}, {.4f, .45f, .35f});
   ph("slime", {.7f, .6f, .7f}, {0, .6f, 0}, {.2f, .9f, .5f}); ph("sign", {.4f, 1.3f, .1f}, {0, 1.3f, 0}, {.3f, .2f, .1f}); ph("chest", {.5f, .35f, .35f}, {0, .35f, 0}, {.4f, .25f, .1f});
   ph("hero_sword_part", {.03f, .55f, .01f}, {0, .5f, 0}, {.75f, .78f, .85f});
