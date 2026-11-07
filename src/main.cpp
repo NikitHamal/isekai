@@ -6,6 +6,16 @@
 #include <cstring>
 #include <filesystem>
 #include <isekai/model.h>
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#include <direct.h>
+extern "C" { __declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001; __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1; }
+#endif
+#include "game_world.hpp"
+#include "soft_extra.hpp"
+namespace isekai { int runInteractive(const std::string& root); }
 namespace fs = std::filesystem;
 using namespace isekai;
 
@@ -31,7 +41,8 @@ static int verifyHeadless(const std::string& root) {
     drawModel(fb, Camera{{0, 3.f + cols * 1.2f, 4.f + cols * 3.5f}, {0, 0.f, -(n / cols) * cell * .3f}, 45}, m, off, s);
   }
   fs::create_directories(root + "/docs/previews");
-  bool png = writePng(root + "/docs/previews/engine_headless_frame.png", fb);
+  bool png = writePng(root + "/docs/previews/asset_contact_sheet.png", fb);
+  { GameWorld w(root); w.stageShowcase(); Framebuffer sf(1600, 900); renderSceneSoft(sf, w.buildScene()); png &= writePng(root + "/docs/previews/engine_headless_frame.png", sf); std::printf("scene: %d of 12 catalog models loaded into the playable world\n", w.modelCount()); }
   std::printf("headless: %d model(s), %zu triangles, frame %s, %d failure(s)\n", n, totalTris, png ? "written" : "WRITE-FAILED", failed);
   return (failed == 0 && png) ? 0 : 1;
 }
@@ -40,10 +51,19 @@ int main(int argc, char** argv) {
   std::string root = "."; bool headless = false;
   for (int i = 1; i < argc; i++) { if (!std::strcmp(argv[i], "--verify-headless")) headless = true; else if (!std::strcmp(argv[i], "--root") && i + 1 < argc) root = argv[++i]; }
   if (headless) return verifyHeadless(root);
-#ifdef ISEKAI_WINDOW
-  std::printf("Interactive window mode: planned in milestone E3/E4.\n");
+#ifdef _WIN32
+  char exe[MAX_PATH]; if (GetModuleFileNameA(nullptr, exe, MAX_PATH)) {  // find assets/ next to isekai.exe (or one level up if inside bin/)
+    fs::path d = fs::path(exe).parent_path(); if (!fs::exists(d / "assets" / "models") && fs::exists(d.parent_path() / "assets" / "models")) d = d.parent_path();
+    SetCurrentDirectoryA(d.string().c_str()); root = d.string(); }
+  return runInteractive(root);
 #else
-  std::printf("Chronicles of Aetheria: Isekai\nBuilt without window support. Use --verify-headless, or configure with -DISEKAI_WINDOW=ON.\n");
-#endif
+  std::printf("Chronicles of Aetheria: Isekai\nThe interactive 3D window is implemented for Windows (Win32 + OpenGL 3.3). Use --verify-headless on this platform.\n");
   return 0;
+#endif
 }
+#ifdef _WIN32
+int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
+  if (__argc > 1 && AttachConsole(ATTACH_PARENT_PROCESS)) { freopen("CONOUT$", "w", stdout); freopen("CONOUT$", "w", stderr); }
+  return main(__argc, __argv);
+}
+#endif

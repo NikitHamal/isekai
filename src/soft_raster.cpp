@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 #include <isekai/model.h>
+#include "math3d.hpp"
+#include "soft_extra.hpp"
 namespace isekai {
 static Vec3 sample(const Texture& t, float u, float v) {
   if (!t.valid()) return {1, 1, 1};
@@ -19,7 +21,7 @@ void clearFrame(Framebuffer& fb, Vec3 top, Vec3 bot) {
 
 struct SV { float sx, sy, z; Vec3 wp, n, t; float u, v, tw; };
 
-void drawModel(Framebuffer& fb, const Camera& cam, const Model& m, Vec3 off, float scale) {
+void drawInstance(Framebuffer& fb, const Camera& cam, const Model& m, const Mat4& MM, Vec3 tint) {
   Vec3 f = normalize(cam.target - cam.eye), r = normalize(cross(f, {0, 1, 0})), up = cross(r, f);
   float tanH = std::tan(cam.fovDeg * 0.5f * 3.14159265f / 180.f), aspect = float(fb.w) / fb.h; Vec3 L = normalize({0.5f, 0.8f, 0.45f});
   for (const Primitive& P : m.prims) {
@@ -27,9 +29,9 @@ void drawModel(Framebuffer& fb, const Camera& cam, const Model& m, Vec3 off, flo
     const Texture *A = mat ? tex(mat->base) : nullptr, *NM = mat ? tex(mat->normal) : nullptr, *EM = mat ? tex(mat->emissive) : nullptr, *MR = mat ? tex(mat->mr) : nullptr;
     std::vector<SV> V(P.pos.size()); std::vector<char> ok(P.pos.size());
     for (size_t i = 0; i < V.size(); i++) {
-      Vec3 w = P.pos[i] * scale + off, d = w - cam.eye; float cz = dot(d, f); ok[i] = cz > 0.05f; if (!ok[i]) continue;
-      V[i] = {(dot(d, r) / (cz * tanH * aspect) * 0.5f + 0.5f) * fb.w, (0.5f - dot(d, up) / (cz * tanH) * 0.5f) * fb.h, cz, w, P.nrm[i],
-              P.tan.empty() ? Vec3{1, 0, 0} : Vec3{P.tan[i*4], P.tan[i*4+1], P.tan[i*4+2]}, P.uv[i*2], P.uv[i*2+1], P.tan.empty() ? 1.f : P.tan[i*4+3]};
+      Vec3 w = transformPoint(MM, P.pos[i]), d = w - cam.eye; float cz = dot(d, f); ok[i] = cz > 0.05f; if (!ok[i]) continue;
+      V[i] = {(dot(d, r) / (cz * tanH * aspect) * 0.5f + 0.5f) * fb.w, (0.5f - dot(d, up) / (cz * tanH) * 0.5f) * fb.h, cz, w, normalize(transformDir(MM, P.nrm[i])),
+              P.tan.empty() ? Vec3{1, 0, 0} : normalize(transformDir(MM, Vec3{P.tan[i*4], P.tan[i*4+1], P.tan[i*4+2]})), P.uv[i*2], P.uv[i*2+1], P.tan.empty() ? 1.f : P.tan[i*4+3]};
     }
     for (size_t k = 0; k + 2 < P.idx.size(); k += 3) {
       uint32_t ia = P.idx[k], ib = P.idx[k+1], ic = P.idx[k+2]; if (!ok[ia] || !ok[ib] || !ok[ic]) continue;
@@ -43,7 +45,7 @@ void drawModel(Framebuffer& fb, const Camera& cam, const Model& m, Vec3 off, flo
         float pa = w0 / a.z, pb = w1 / b.z, pc = w2 / c.z, inv = 1.f / (pa + pb + pc); float z = inv; size_t di = size_t(y) * fb.w + x; if (z >= fb.depth[di]) continue;
         pa *= inv; pb *= inv; pc *= inv; float u = a.u * pa + b.u * pb + c.u * pc, v = a.v * pa + b.v * pb + c.v * pc;
         Vec3 n = normalize(a.n * pa + b.n * pb + c.n * pc); if (dot(n, f) > 0) n = n * -1.f;  // double-sided
-        Vec3 alb = A ? sample(*A, u, v) : Vec3{.6f, .6f, .6f};
+        Vec3 alb = A ? sample(*A, u, v) : (mat ? Vec3{mat->baseFactor[0], mat->baseFactor[1], mat->baseFactor[2]} * .6f : Vec3{.6f, .6f, .6f}); alb = {alb.x * tint.x, alb.y * tint.y, alb.z * tint.z};
         if (NM) { Vec3 t = normalize(a.t * pa + b.t * pb + c.t * pc); Vec3 s = sample(*NM, u, v); Vec3 tn = {s.x * 2 - 1, s.y * 2 - 1, s.z * 2 - 1}; Vec3 bt = cross(n, t) * a.tw; Vec3 nn = normalize(t * tn.x + bt * tn.y + n * tn.z); if (dot(nn, n) > 0.2f) n = nn; }
         float rough = MR ? sample(*MR, u, v).y : 0.7f, metal = MR ? sample(*MR, u, v).z : 0.f; Vec3 wp = a.wp * pa + b.wp * pb + c.wp * pc; Vec3 vd = normalize(cam.eye - wp), hv = normalize(L + vd);
         float ndl = std::max(0.f, dot(n, L)), spec = std::pow(std::max(0.f, dot(n, hv)), 2.f / (rough * rough + .02f)) * (0.1f + 0.9f * metal) * (1 - rough * .6f);
@@ -55,5 +57,7 @@ void drawModel(Framebuffer& fb, const Camera& cam, const Model& m, Vec3 off, flo
     }
   }
 }
+void drawModel(Framebuffer& fb, const Camera& cam, const Model& m, Vec3 off, float scale) {
+  Mat4 M = mIdent(); M[0] = M[5] = M[10] = scale; M[12] = off.x; M[13] = off.y; M[14] = off.z; drawInstance(fb, cam, m, M, {1, 1, 1}); }
 bool writePng(const std::string& path, const Framebuffer& fb) { return stbi_write_png(path.c_str(), fb.w, fb.h, 3, fb.rgb.data(), fb.w * 3) != 0; }
 }  // namespace isekai
