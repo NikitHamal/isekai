@@ -16,3 +16,5 @@ See `ASSET_CATALOG.md` and `ROADMAP_STATUS.md` for progress.
 ## Gallery
 ![headless engine frame](docs/previews/engine_headless_frame.png)
 ![env_ancient_root_archway](docs/previews/env_ancient_root_archway.png)
+![prp_crimson_heart_container](docs/previews/prp_crimson_heart_container.png)
+![prp_wooden_wayfinder_signpost](docs/previews/prp_wooden_wayfinder_signpost.png)

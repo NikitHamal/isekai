@@ -53,8 +53,8 @@ Pipeline: `tools/assets/gen_<slug>.py` -> `assets/models/<category>/<slug>.glb` 
 - [ ] `wpn_dwarven_runic_warhammer` (>= 4,000 tris)
 
 ## 8. Props (`assets/models/props/`)
-- [ ] `prp_crimson_heart_container` (>= 3,000 tris)
+- [x] `prp_crimson_heart_container` (>= 3,000 tris)
 - [ ] `prp_ornate_treasure_chest` (>= 4,000 tris)
-- [ ] `prp_wooden_wayfinder_signpost` (>= 3,000 tris)
+- [x] `prp_wooden_wayfinder_signpost` (>= 3,000 tris)
 - [ ] `prp_hanging_acorn_amber_lantern` (>= 3,500 tris)
 - [ ] `prp_medieval_market_barrels_crates` (>= 4,500 tris)
