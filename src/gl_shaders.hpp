@@ -1,4 +1,4 @@
-// GLSL 330 sources: Cook-Torrance GGX PBR + 3x3 PCF sun shadows, splat-mapped terrain, golden-hour atmospheric sky, depth-only shadow pass, HUD/FX overlay.
+// GLSL 330 sources: Cook-Torrance GGX PBR + 3x3 PCF sun shadows, golden-hour rim light, offscreen HDR SSAO + dual-pass Gaussian bloom, HUD/FX overlay.
 #pragma once
 namespace isekai {
 static const char* kShadowVS = R"(#version 330 core
@@ -26,7 +26,6 @@ vec3 brdf(vec3 N,vec3 V,vec3 L,vec3 rad,vec3 alb,float rough,float met){
   vec3 F0=mix(vec3(0.04),alb,met); vec3 F=F0+(1.0-F0)*pow(1.0-vh,5.0); float a=max(rough*rough,0.02);
   vec3 spec=D(nh,a)*Gs(nv,nl,rough)*F/(4.0*nv*max(nl,1e-3)); vec3 kd=(1.0-F)*(1.0-met);
   return (kd*alb/PI+spec)*rad*nl; }
-vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14),0.0,1.0); }
 float shadowAt(vec3 wp, vec3 n){
   vec4 p=uLVP*vec4(wp+n*0.07,1.0); vec3 c=p.xyz/p.w*0.5+0.5; if(c.x<0.0||c.x>1.0||c.y<0.0||c.y>1.0||c.z>1.0) return 1.0;
   vec2 ts=1.0/vec2(textureSize(uShadow,0)); float s=0.0; float bias=0.0006;
@@ -34,7 +33,6 @@ float shadowAt(vec3 wp, vec3 n){
   return s/9.0; }
 float roadX(float z){ return 3.5*sin(z*0.045)+1.5*sin(z*0.11+1.0); }
 float sst(float a,float b,float x){ float t=clamp((x-a)/(b-a),0.0,1.0); return t*t*(3.0-2.0*t); }
-// Terrain splat: grass/meadow, rocky foothills, mud verge, mortared cobblestone road + plaza. Returns albedo, writes bump height + roughness.
 vec3 terrain(vec3 wp, out float hgt, out float rough){
   float x=wp.x, z=wp.z; float d=abs(x-roadX(z)); float rm=max(clamp((3.2-d)/1.2,0.0,1.0), sst(8.0,14.0,z)*(1.0-sst(16.0,22.0,d)));
   float n1=vnoise(wp.xz*0.9), n2=vnoise(wp.xz*4.0), n3=vnoise(wp.xz*0.12), n4=vnoise(wp.xz*18.0);
@@ -59,19 +57,23 @@ void main(){
     if(uHas.z>0.5){ vec3 mr=texture(uMR,vUV).rgb; rough=clamp(mr.g,0.05,1.0); met=mr.b; }
     if(dot(N,V)<0.0) N=-N;
     if(uHas.y>0.5){ vec3 T=normalize(vT.xyz); T=normalize(T-N*dot(N,T)); vec3 B=cross(N,T)*vT.w; vec3 t=texture(uNrm,vUV).xyz*2.0-1.0; N=normalize(T*t.x+B*t.y+N*t.z); }
-    if(uHas.w>0.5) em=pow(texture(uEm,vUV).rgb,vec3(2.2))*uEmF*uEmBoost; }
+    if(uHas.w>0.5) em=pow(texture(uEm,vUV).rgb,vec3(2.2))*uEmF*uEmBoost * 1.8; }
   alb*=uTint; vec3 Ng=normalize(vN);
   float sh=shadowAt(vWP,uGround==1?normalize(vN):(dot(Ng,V)<0.0?-Ng:Ng));
   vec3 sunCol=vec3(3.4,2.5,1.55); vec3 col=brdf(N,V,uSun,sunCol*sh,alb,rough,met);
-  // horizon ambient occlusion: contact darkening near the base of structures/characters, hemispheric sky/ground bounce
-  float ao=(uGround==1)?1.0:mix(0.55,1.0,smoothstep(0.0,2.2,vWP.y-uBaseY));
-  vec3 amb=mix(vec3(0.10,0.075,0.05),uZenith*0.55+uHoriz*0.12,N.y*0.5+0.5);
-  col+=alb*amb*(1.0-met*0.6)*ao+mix(vec3(0.0),uHoriz*0.2,pow(1.0-max(dot(N,V),0.0),3.0))*(0.3+met)*ao;
+  float ao=(uGround==1)?1.0:mix(0.52,1.0,smoothstep(0.0,2.2,vWP.y-uBaseY));
+  vec3 amb=mix(vec3(0.10,0.075,0.05),uZenith*0.55+uHoriz*0.14,N.y*0.5+0.5);
+  col+=alb*amb*(1.0-met*0.6)*ao;
+  // Golden-hour directional sun rim-lighting on characters, foliage & architecture
+  if(uGround==0){
+    float rim=pow(1.0-max(dot(N,V),0.0),3.0); float sb=clamp(dot(N,uSun)*0.5+0.5,0.0,1.0);
+    col+=vec3(1.45,0.88,0.42)*rim*sb*(0.35+0.65*sh)*(0.4+0.6*ao);
+  }
   for(int i=0;i<uNL;i++){ vec3 d=uLP[i]-vWP; float dist=length(d); float att=clamp(1.0-pow(dist/uLR[i],2.0),0.0,1.0); att*=att/(1.0+dist*dist*0.35);
     col+=brdf(N,V,d/dist,uLC[i]*att,alb,rough,met); }
-  col+=em; float dist=length(uCam-vWP); float fog=1.0-exp(-pow(dist*0.011,1.3));
-  float sunAmt=pow(max(dot(normalize(vWP-uCam),uSun),0.0),4.0); vec3 fogC=mix(uHoriz*0.8,vec3(1.0,0.72,0.45),sunAmt*0.6);
-  col=mix(col,fogC,clamp(fog,0.0,1.0)); col=aces(col*0.8); oC=vec4(pow(col,vec3(1.0/2.2)),uBase.a); })";
+  col+=em; float dist=length(uCam-vWP); float fog=1.0-exp(-pow(dist*0.011,1.35));
+  float sunAmt=pow(max(dot(normalize(vWP-uCam),uSun),0.0),3.5); vec3 fogC=mix(uHoriz*0.85,vec3(1.15,0.76,0.45),sunAmt*0.7);
+  col=mix(col,fogC,clamp(fog,0.0,1.0)); oC=vec4(col,uBase.a); })";
 static const char* kSkyVS = R"(#version 330 core
 out vec2 vP; void main(){ vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2); vP=p*2.0-1.0; gl_Position=vec4(vP,0.9999,1.0); })";
 static const char* kSkyFS = R"(#version 330 core
@@ -79,12 +81,41 @@ in vec2 vP; out vec4 oC; uniform vec3 uF; uniform vec3 uR; uniform vec3 uU; unif
 float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
 float vnoise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y); }
 void main(){ vec3 d=normalize(uF+vP.x*uTan.x*uR+vP.y*uTan.y*uU); float h=clamp(d.y,0.0,1.0); float mu=max(dot(d,uSun),0.0);
-  vec3 c=mix(uHoriz*0.95,uZenith,pow(h,0.5));                                  // Rayleigh-like zenith blue
-  c+=vec3(1.0,0.45,0.18)*exp(-abs(d.y)*7.0)*(0.25+0.9*pow(mu,3.0));              // golden horizon scattering band
-  c+=vec3(1.0,0.75,0.45)*(pow(mu,8.0)*0.35+pow(mu,120.0)*2.2);                  // Mie sun halo + disc
+  vec3 c=mix(uHoriz*0.95,uZenith,pow(h,0.5));
+  c+=vec3(1.0,0.45,0.18)*exp(-abs(d.y)*7.0)*(0.25+0.9*pow(mu,3.0));
+  c+=vec3(1.0,0.75,0.45)*(pow(mu,8.0)*0.35+pow(mu,120.0)*2.2);
   if(d.y>0.02){ vec2 q=d.xz/(d.y+0.25)*2.2; float cl=clamp((vnoise(q*vec2(1.3,2.5))*0.7+vnoise(q*vec2(3.0,5.0))*0.3-0.52)*3.0,0.0,1.0)*smoothstep(0.02,0.3,d.y)*0.55; c=mix(c,vec3(1.0,0.78,0.6)*1.1+vec3(0.1,0.05,0.0)*mu,cl); }
   if(d.y<0.0) c=mix(c,uHoriz*0.8,clamp(1.0+d.y*4.0,0.0,1.0));
-  c=c*0.62; c=clamp((c*(2.51*c+0.03))/(c*(2.43*c+0.59)+0.14),0.0,1.0); oC=vec4(pow(c,vec3(1.0/2.2)),1.0); })";
+  oC=vec4(c*0.78,1.0); })";
+static const char* kBloomFS = R"(#version 330 core
+in vec2 vP; out vec4 oC; uniform sampler2D uTex; uniform vec2 uDir; uniform int uExtract;
+void main(){
+  vec2 uv=vP*0.5+0.5; float w[5]=float[](0.227027,0.1945946,0.1216216,0.054054,0.016216);
+  vec3 acc=vec3(0.0);
+  for(int i=-4;i<=4;i++){
+    vec3 c=texture(uTex,uv+uDir*float(i)).rgb;
+    if(uExtract==1){ float br=max(max(c.r,c.g),c.b); c*=clamp((br-1.1)/max(br,1e-4),0.0,1.0); }
+    acc+=c*w[abs(i)];
+  }
+  oC=vec4(acc,1.0); })";
+static const char* kPostFS = R"(#version 330 core
+in vec2 vP; out vec4 oC; uniform sampler2D uScene; uniform sampler2D uDepth; uniform sampler2D uBloom; uniform vec2 uInvRes;
+float linZ(vec2 uv){ float d=texture(uDepth,uv).r*2.0-1.0; return (2.0*0.1*500.0)/(500.0+0.1-d*(500.0-0.1)); }
+vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14),0.0,1.0); }
+void main(){
+  vec2 uv=vP*0.5+0.5; vec3 hdr=texture(uScene,uv).rgb; float zc=linZ(uv); float ao=1.0;
+  if(zc<420.0){
+    float occ=0.0; float rad=clamp(10.0/zc,1.5,9.0);
+    float ang=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453)*6.28318;
+    for(int i=0;i<12;i++){
+      float r=(float(i)+0.5)/12.0*rad; float a=ang+float(i)*2.39996;
+      vec2 off=vec2(cos(a),sin(a))*r*uInvRes; float zs=linZ(uv+off); float dz=zc-zs;
+      if(dz>0.02&&dz<1.35) occ+=smoothstep(0.02,0.22,dz)*(1.0-smoothstep(0.45,1.35,dz));
+    }
+    ao=clamp(1.0-occ*(0.58/12.0),0.38,1.0);
+  }
+  vec3 col=hdr*ao+texture(uBloom,uv).rgb*0.72;
+  col=aces(col*0.80); oC=vec4(pow(col,vec3(1.0/2.2)),1.0); })";
 static const char* kHudVS = R"(#version 330 core
 layout(location=0) in vec2 aP; layout(location=1) in vec2 aUV; layout(location=2) in vec4 aC; uniform vec2 uRes; out vec2 vUV; out vec4 vC;
 void main(){ vUV=aUV; vC=aC; gl_Position=vec4(aP.x/uRes.x*2.0-1.0,1.0-aP.y/uRes.y*2.0,0.0,1.0); })";

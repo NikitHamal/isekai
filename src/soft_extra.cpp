@@ -48,8 +48,46 @@ void renderSceneSoft(Framebuffer& fb, const Scene& s) {
   static ShadowMap sm; shadowPass(sm, s); gEnv.sun = sun; gEnv.sm = &sm; gEnv.lights = &s.lights; gEnv.fogCol = vmix(s.skyHorizon, Vec3{.6f, .65f, .75f}, .35f) * .8f; gEnv.fogDen = 0.0085f;
   for (const Instance& in : s.inst) if (in.model) drawInstance(fb, s.cam, *in.model, in.M, in.tint, in.ground, in.anim);
   gEnv.sm = nullptr; gEnv.lights = nullptr;
+  // Screen-Space Ambient Occlusion (SSAO) from depth neighborhood
+  const int dx8[8] = {1, -1, 0, 0, 1, -1, 1, -1}, dy8[8] = {0, 0, 1, -1, 1, -1, -1, 1};
+  for (int y = 0; y < fb.h; y++) for (int x = 0; x < fb.w; x++) {
+    float zc = fb.depth[size_t(y) * fb.w + x]; if (zc > 400.f) continue;
+    int rad = std::clamp(int(14.f / std::max(zc, 0.5f)), 2, 9); float occ = 0.f;
+    for (int k = 0; k < 8; k++) {
+      int sx = std::clamp(x + dx8[k] * rad, 0, fb.w - 1), sy = std::clamp(y + dy8[k] * rad, 0, fb.h - 1);
+      float dz = zc - fb.depth[size_t(sy) * fb.w + sx];
+      if (dz > 0.03f && dz < 1.35f) occ += sstep(0.03f, 0.24f, dz) * (1.f - sstep(0.45f, 1.35f, dz));
+    }
+    float ao = std::clamp(1.f - occ * (0.54f / 8.f), 0.42f, 1.f);
+    uint8_t* p = &fb.rgb[(size_t(y) * fb.w + x) * 3];
+    p[0] = uint8_t(p[0] * ao); p[1] = uint8_t(p[1] * ao); p[2] = uint8_t(p[2] * ao);
+  }
   for (const Fx& fx : s.fx) { Vec3 d = fx.pos - s.cam.eye; float cz = dot(d, f); if (cz < .3f) continue; float sx = (dot(d, r) / (cz * tanH * asp) * .5f + .5f) * fb.w, sy = (.5f - dot(d, up) / (cz * tanH) * .5f) * fb.h;
     splat(fb, sx, sy, std::min(160.f, fx.size * fb.h * .9f / cz), fx.color, fx.alpha); }
+  // Dual-pass separable Gaussian bloom on bright emissive/spell pixels
+  { int bw = std::max(1, fb.w / 4), bh = std::max(1, fb.h / 4);
+  std::vector<Vec3> b0(size_t(bw) * bh), b1(size_t(bw) * bh);
+  for (int y = 0; y < bh; y++) for (int x = 0; x < bw; x++) {
+    const uint8_t* p = &fb.rgb[(size_t(y * 4) * fb.w + x * 4) * 3];
+    Vec3 c{p[0] / 255.f, p[1] / 255.f, p[2] / 255.f}; float br = std::max({c.x, c.y, c.z});
+    b0[size_t(y) * bw + x] = (br > 0.72f) ? c * ((br - 0.72f) / 0.28f) : Vec3{};
+  }
+  const float gw[5] = {0.227f, 0.195f, 0.122f, 0.054f, 0.016f};
+  for (int y = 0; y < bh; y++) for (int x = 0; x < bw; x++) {
+    Vec3 acc = b0[size_t(y) * bw + x] * gw[0];
+    for (int i = 1; i <= 4; i++) acc = acc + (b0[size_t(y) * bw + std::min(bw - 1, x + i)] + b0[size_t(y) * bw + std::max(0, x - i)]) * gw[i];
+    b1[size_t(y) * bw + x] = acc;
+  }
+  for (int y = 0; y < bh; y++) for (int x = 0; x < bw; x++) {
+    Vec3 acc = b1[size_t(y) * bw + x] * gw[0];
+    for (int i = 1; i <= 4; i++) acc = acc + (b1[size_t(std::min(bh - 1, y + i)) * bw + x] + b1[size_t(std::max(0, y - i)) * bw + x]) * gw[i];
+    b0[size_t(y) * bw + x] = acc;
+  }
+  for (int y = 0; y < fb.h; y++) for (int x = 0; x < fb.w; x++) {
+    Vec3 bl = b0[size_t(std::min(bh - 1, y / 4)) * bw + std::min(bw - 1, x / 4)] * 0.55f;
+    uint8_t* p = &fb.rgb[(size_t(y) * fb.w + x) * 3];
+    p[0] = uint8_t(std::min(255.f, p[0] + bl.x * 255.f)); p[1] = uint8_t(std::min(255.f, p[1] + bl.y * 255.f)); p[2] = uint8_t(std::min(255.f, p[2] + bl.z * 255.f));
+  } }
   // Minimal dark-fantasy HUD: slim metallic-framed HP (crimson) and Mana (azure) bars, top-left. Nothing else.
   int u = std::max(1, fb.h / 450), x0 = 24 * u, bw = 190 * u, bh = 7 * u; const Vec3 frame{.55f, .5f, .42f}, back{.05f, .03f, .04f};
   auto bar = [&](int y, float v, Vec3 c0, Vec3 c1) { rect(fb, x0 - u, y - u, x0 + bw + u, y + bh + u, frame, .9f); rect(fb, x0, y, x0 + bw, y + bh, back, .9f); int w = int(bw * std::clamp(v, 0.f, 1.f));

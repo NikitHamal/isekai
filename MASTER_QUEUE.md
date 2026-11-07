@@ -21,7 +21,7 @@
        - **Dodge Roll / Jump**: Forward 360-degree tucked roll or airborne jump pose.
        - **Monsters & Allies**: Animated biped walk + heavy weapon swing for Orcs, Goblins, and Paladin Garrick; 4-legged bounding gallop + lunging bite for Shadow Direwolves.
 
-- [ ] **Q03 — Offscreen HDR Framebuffer: Screen-Space Ambient Occlusion (SSAO), Dual-Pass Bloom & Atmospheric Scattering**
+- [x] **Q03 — Offscreen HDR Framebuffer: Screen-Space Ambient Occlusion (SSAO), Dual-Pass Bloom & Atmospheric Scattering**
   - Upgrade `src/gl_renderer.hpp` / `src/gl_renderer.cpp` to render into an offscreen color + depth FBO (`sceneFBO`) and composite with a post-process pass:
     1. **SSAO**: Reconstruct depth neighborhoods to ground buildings, wagon wheels, boots, rocks, and foliage with natural contact shadows.
     2. **Dual-Pass Gaussian Bloom**: Extract bright emissive pixels (`> 1.1` from spells, glowing runes, forge fire, and lit windows), blur horizontally/vertically, and additively composite.

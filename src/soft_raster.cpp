@@ -54,6 +54,10 @@ void drawInstance(Framebuffer& fb, const Camera& cam, const Model& m, const Mat4
         float rough = MR ? sample(*MR, u, v).y : 0.7f, metal = MR ? sample(*MR, u, v).z : 0.f; Vec3 wp = a.wp * pa + b.wp * pb + c.wp * pc; Vec3 vd = normalize(cam.eye - wp), hv = normalize(L + vd);
         float sh = gEnv.sm ? softShadow(*gEnv.sm, wp, n, L) : 1.f; float ndl = std::max(0.f, dot(n, L)) * sh, spec = std::pow(std::max(0.f, dot(n, hv)), 2.f / (rough * rough + .02f)) * (0.1f + 0.9f * metal) * (1 - rough * .6f);
         spec *= sh; float ao = ground ? 1.f : (gEnv.sm ? std::clamp(0.55f + 0.45f * sstep(0.f, 2.2f, wp.y - terrainHeight(wp.x, wp.z)), 0.f, 1.f) : 1.f); float amb = (0.26f + 0.14f * n.y) * ao; Vec3 lit = {alb.x * (1 - metal * .8f) * (amb * .8f + ndl * 1.25f) + spec * (0.9f + metal * (alb.x - .9f)), alb.y * (1 - metal * .8f) * (amb + ndl * 1.1f) + spec * (0.85f + metal * (alb.y - .85f)), alb.z * (1 - metal * .8f) * (amb * 1.2f + ndl * .85f) + spec * (0.75f + metal * (alb.z - .75f))};
+        if (!ground) {
+          float rim = std::pow(1.f - std::max(0.f, dot(n, vd)), 3.0f), sb = std::clamp(dot(n, L) * 0.5f + 0.5f, 0.f, 1.f);
+          lit = lit + Vec3{1.15f, 0.72f, 0.35f} * (rim * sb * (0.35f + 0.65f * sh) * ao * 0.55f);
+        }
         if (gEnv.lights) lit = lit + softPointLights(wp, n, alb);
         if (EM && mat) { Vec3 e = sample(*EM, u, v); lit = lit + Vec3{e.x * mat->emissiveFactor[0], e.y * mat->emissiveFactor[1], e.z * mat->emissiveFactor[2]} * 2.2f; }
         float fog = 1.f - std::exp(-z * gEnv.fogDen); lit = lit * (1 - fog) + gEnv.fogCol * fog;
