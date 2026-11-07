@@ -13,3 +13,4 @@
 - Session 3: purge + shadow-mapped realistic renderer + sword/magic combat + Valoria Kingdom assets (v0.3.0).
 
 - [x] **Q01**: Sculpted 360-degree mountain crags (`env_mossy_forest_cliff_modular.glb`), sacred world tree (`env_sacred_world_tree_canopy.glb`), 3D pine/oak forest, mossy boulders, wind-swaying 3D grass tufts & wildflowers, fixed idle sword glow.
+- [x] **Q02**: Hierarchical multi-part character & monster skeletal animation (`src/animator.hpp`), anatomical sub-mesh `partId` + joint pivots in `model.h`, `gltf_loader.cpp`, and `vork_forge`.

@@ -25,7 +25,8 @@ static void shadowPass(ShadowMap& sm, const Scene& s) {
   sm.n = 2048; sm.d.assign(size_t(sm.n) * sm.n, -1e9f); sm.focus = s.focus; Vec3 S = normalize(s.sunDir); sm.S = S; sm.lx = normalize(cross({0, 1, 0}, S)); sm.ly = cross(S, sm.lx);
   for (const Instance& in : s.inst) { if (!in.model || !in.castShadow) continue;
     for (const Primitive& P : in.model->prims) { if (P.material >= 0 && in.model->materials[P.material].blend) continue;
-      std::vector<Vec3> V(P.pos.size()); for (size_t i = 0; i < V.size(); i++) { Vec3 q = transformPoint(in.M, P.pos[i]) - sm.focus; V[i] = {(dot(q, sm.lx) / sm.ext * .5f + .5f) * sm.n, (dot(q, sm.ly) / sm.ext * .5f + .5f) * sm.n, dot(q, S)}; }
+      Mat4 PM = (in.anim.rig == RIG_STATIC) ? in.M : mMul(in.M, partTransform(in.anim, P.partId, P.pivot));
+      std::vector<Vec3> V(P.pos.size()); for (size_t i = 0; i < V.size(); i++) { Vec3 q = transformPoint(PM, P.pos[i]) - sm.focus; V[i] = {(dot(q, sm.lx) / sm.ext * .5f + .5f) * sm.n, (dot(q, sm.ly) / sm.ext * .5f + .5f) * sm.n, dot(q, S)}; }
       for (size_t k = 0; k + 2 < P.idx.size(); k += 3) { const Vec3 &a = V[P.idx[k]], &b = V[P.idx[k + 1]], &c = V[P.idx[k + 2]]; float area = (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y); if (std::fabs(area) < 1e-9f) continue;
         int x0 = std::max(0, int(std::floor(std::min({a.x, b.x, c.x})))), x1 = std::min(sm.n - 1, int(std::ceil(std::max({a.x, b.x, c.x})))), y0 = std::max(0, int(std::floor(std::min({a.y, b.y, c.y})))), y1 = std::min(sm.n - 1, int(std::ceil(std::max({a.y, b.y, c.y}))));
         if (x1 - x0 > 600 || y1 - y0 > 600) continue;
@@ -45,7 +46,7 @@ void renderSceneSoft(Framebuffer& fb, const Scene& s) {
     p[0] = uint8_t(255 * std::pow(acesF(c.x), 1.f / 2.2f)); p[1] = uint8_t(255 * std::pow(acesF(c.y), 1.f / 2.2f)); p[2] = uint8_t(255 * std::pow(acesF(c.z), 1.f / 2.2f)); }
   std::fill(fb.depth.begin(), fb.depth.end(), 1e30f);
   static ShadowMap sm; shadowPass(sm, s); gEnv.sun = sun; gEnv.sm = &sm; gEnv.lights = &s.lights; gEnv.fogCol = vmix(s.skyHorizon, Vec3{.6f, .65f, .75f}, .35f) * .8f; gEnv.fogDen = 0.0085f;
-  for (const Instance& in : s.inst) if (in.model) drawInstance(fb, s.cam, *in.model, in.M, in.tint, in.ground);
+  for (const Instance& in : s.inst) if (in.model) drawInstance(fb, s.cam, *in.model, in.M, in.tint, in.ground, in.anim);
   gEnv.sm = nullptr; gEnv.lights = nullptr;
   for (const Fx& fx : s.fx) { Vec3 d = fx.pos - s.cam.eye; float cz = dot(d, f); if (cz < .3f) continue; float sx = (dot(d, r) / (cz * tanH * asp) * .5f + .5f) * fb.w, sy = (.5f - dot(d, up) / (cz * tanH) * .5f) * fb.h;
     splat(fb, sx, sy, std::min(160.f, fx.size * fb.h * .9f / cz), fx.color, fx.alpha); }

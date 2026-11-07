@@ -54,6 +54,7 @@ def compile_glb(root, path, tex_size=512):
         if tuple(n.pos) != (0,0,0): d["translation"] = [float(x) for x in n.pos]
         if tuple(n.rot) != (0,0,0): d["rotation"] = _quat(n.rot)
         if tuple(n.scale) != (1,1,1): d["scale"] = [float(x) for x in n.scale]
+        if n.part_id or tuple(n.pivot) != (0,0,0): d["extras"] = {"partId": int(n.part_id), "pivot": [float(x) for x in n.pivot]}
         idx = len(nodes_json); nodes_json.append(d)
         ch = [walk(c) for c in n.children]
         if ch: d["children"] = ch

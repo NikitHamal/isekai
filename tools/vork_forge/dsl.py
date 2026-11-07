@@ -39,10 +39,10 @@ class Material:
 @dataclass
 class Node:
     name: str; mesh: Mesh = None; material: Material = None; children: list = field(default_factory=list)
-    pos: tuple = (0,0,0); rot: tuple = (0,0,0); scale: tuple = (1,1,1)
+    pos: tuple = (0,0,0); rot: tuple = (0,0,0); scale: tuple = (1,1,1); part_id: int = 0; pivot: tuple = (0,0,0)
 
-def node(name, mesh=None, material=None, children=(), pos=(0,0,0), rot=(0,0,0), scale=(1,1,1)):
-    return Node(name, mesh, material, list(children), pos, rot, scale)
+def node(name, mesh=None, material=None, children=(), pos=(0,0,0), rot=(0,0,0), scale=(1,1,1), part_id=0, pivot=(0,0,0)):
+    return Node(name, mesh, material, list(children), pos, rot, scale, part_id, pivot)
 
 def grid(P, uscale=1.0, vscale=1.0, closed_u=True, cap=False, flip=False):
     """P: (rows, cols, 3) -> quad-grid mesh. Wraps columns when closed_u."""

@@ -13,7 +13,7 @@ class GLRenderer {
   void draw(const Scene& s, int w, int h);
  private:
   struct HV { float x, y, u, v, r, g, b, a; };
-  struct GPUPrim { GLuint vao = 0, vbo = 0, ebo = 0; GLsizei count = 0; int mat = -1; };
+  struct GPUPrim { GLuint vao = 0, vbo = 0, ebo = 0; GLsizei count = 0; int mat = -1, partId = 0; Vec3 pivot{}; };
   struct GPUModel { std::vector<GPUPrim> prims; std::vector<GLuint> tex; };
   GPUModel& upload(const Model* m);
   GLint U(GLuint prog, const char* n);

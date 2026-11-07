@@ -10,6 +10,6 @@ struct SoftEnv { Vec3 sun{.5f, .8f, .45f}; const ShadowMap* sm = nullptr; const 
 extern SoftEnv gEnv;
 float softShadow(const ShadowMap& sm, Vec3 wp, Vec3 n, Vec3 L);
 Vec3 softPointLights(Vec3 wp, Vec3 n, Vec3 alb);
-void drawInstance(Framebuffer& fb, const Camera& cam, const Model& m, const Mat4& M, Vec3 tint, bool ground = false);
+void drawInstance(Framebuffer& fb, const Camera& cam, const Model& m, const Mat4& M, Vec3 tint, bool ground = false, const AnimState& anim = {});
 void renderSceneSoft(Framebuffer& fb, const Scene& s);
 }  // namespace isekai

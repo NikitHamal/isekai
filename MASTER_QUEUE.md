@@ -9,7 +9,7 @@
     1. Rebuild `tools/assets/gen_env_mossy_forest_cliff_modular.py` as jagged, natural multi-octave noise-displaced limestone crags and terraced ledges (zero rectangular boxes or oval bumps), and generate `assets/models/environment/env_sacred_world_tree_canopy.glb` (`>= 9,000` tris) with gnarled roots, bark trunk, and layered leaf canopies.
     2. Populate the Valoria frontier hills and road verges in `src/game_world.cpp` and `src/gl_renderer.cpp` with **3D Pine & Oak Forest Trees**, **Mossy Boulders**, and **GPU-instanced / batched 3D Grass Tufts & Wildflowers** that sway smoothly in the wind.
 
-- [ ] **Q02 — Hierarchical Multi-Part Character & Monster Skeletal Animation (`src/animator.hpp`)**
+- [x] **Q02 — Hierarchical Multi-Part Character & Monster Skeletal Animation (`src/animator.hpp`)**
   - **Issue to fix**: Currently `cgltf` flattens every `.glb` into a single static mesh, so the hero, allies, and monsters slide along the ground without moving their legs, arms, cloak, or weapons.
   - **Implementation**:
     1. Extend `include/isekai/model.h`, `src/model.cpp`, and `tools/vork_forge/glb_compiler.py` (plus the character/monster generators) so each anatomical sub-mesh carries a `partId` (`0=root`, `1=torso`, `2=head`, `3=cloak`, `4=arm_l`, `5=arm_r`, `6=leg_l`, `7=leg_r`, `8=weapon_r`, `9=jaw_or_tail`) and its local joint pivot `(px, py, pz)`.

@@ -24,17 +24,18 @@ void clearFrame(Framebuffer& fb, Vec3 top, Vec3 bot) {
 
 struct SV { float sx, sy, z; Vec3 wp, n, t; float u, v, tw; };
 
-void drawInstance(Framebuffer& fb, const Camera& cam, const Model& m, const Mat4& MM, Vec3 tint, bool ground) {
+void drawInstance(Framebuffer& fb, const Camera& cam, const Model& m, const Mat4& MM, Vec3 tint, bool ground, const AnimState& anim) {
   Vec3 f = normalize(cam.target - cam.eye), r = normalize(cross(f, {0, 1, 0})), up = cross(r, f);
   float tanH = std::tan(cam.fovDeg * 0.5f * 3.14159265f / 180.f), aspect = float(fb.w) / fb.h; Vec3 L = gEnv.sm ? gEnv.sun : normalize({0.5f, 0.8f, 0.45f});
   for (const Primitive& P : m.prims) {
+    Mat4 PM = (anim.rig == RIG_STATIC) ? MM : mMul(MM, partTransform(anim, P.partId, P.pivot));
     const Material* mat = P.material >= 0 ? &m.materials[P.material] : nullptr; auto tex = [&](int i) -> const Texture* { return i >= 0 ? &m.textures[i] : nullptr; };
     const Texture *A = mat ? tex(mat->base) : nullptr, *NM = mat ? tex(mat->normal) : nullptr, *EM = mat ? tex(mat->emissive) : nullptr, *MR = mat ? tex(mat->mr) : nullptr;
     std::vector<SV> V(P.pos.size()); std::vector<char> ok(P.pos.size());
     for (size_t i = 0; i < V.size(); i++) {
-      Vec3 w = transformPoint(MM, P.pos[i]), d = w - cam.eye; float cz = dot(d, f); ok[i] = cz > 0.05f; if (!ok[i]) continue;
-      V[i] = {(dot(d, r) / (cz * tanH * aspect) * 0.5f + 0.5f) * fb.w, (0.5f - dot(d, up) / (cz * tanH) * 0.5f) * fb.h, cz, w, normalize(transformDir(MM, P.nrm[i])),
-              P.tan.empty() ? Vec3{1, 0, 0} : normalize(transformDir(MM, Vec3{P.tan[i*4], P.tan[i*4+1], P.tan[i*4+2]})), P.uv[i*2], P.uv[i*2+1], P.tan.empty() ? 1.f : P.tan[i*4+3]};
+      Vec3 w = transformPoint(PM, P.pos[i]), d = w - cam.eye; float cz = dot(d, f); ok[i] = cz > 0.05f; if (!ok[i]) continue;
+      V[i] = {(dot(d, r) / (cz * tanH * aspect) * 0.5f + 0.5f) * fb.w, (0.5f - dot(d, up) / (cz * tanH) * 0.5f) * fb.h, cz, w, normalize(transformDir(PM, P.nrm[i])),
+              P.tan.empty() ? Vec3{1, 0, 0} : normalize(transformDir(PM, Vec3{P.tan[i*4], P.tan[i*4+1], P.tan[i*4+2]})), P.uv[i*2], P.uv[i*2+1], P.tan.empty() ? 1.f : P.tan[i*4+3]};
     }
     for (size_t k = 0; k + 2 < P.idx.size(); k += 3) {
       uint32_t ia = P.idx[k], ib = P.idx[k+1], ic = P.idx[k+2]; if (!ok[ia] || !ok[ib] || !ok[ic]) continue;

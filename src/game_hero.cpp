@@ -73,6 +73,7 @@ void GameWorld::enemiesUpdate(float dt) {
     Vec3 to = hero - e.pos; to.y = 0; float d = vlen(to), speed = 0; Vec3 mv{};
     if (d < s.detect && d > s.range * 0.8f) { mv = to * (1.f / d); speed = s.speed; }
     else if (d >= s.detect) { Vec3 pt = e.home + Vec3{std::sin(e.patrolT * .45f) * 3.2f, 0, std::cos(e.patrolT * .6f) * 2.4f}, pd = pt - e.pos; pd.y = 0; float pl = vlen(pd); if (pl > .1f) { mv = pd * (1.f / pl); speed = s.speed * .35f; } }
+    e.moveSpeed = speed; e.walkPhase += dt * speed * 2.6f;
     if (speed > 0) e.yaw += wrapPi(std::atan2(mv.x, mv.z) - e.yaw) * (1.f - std::exp(-8.f * dt)); else if (d <= s.range) e.yaw = std::atan2(to.x, to.z);
     e.pos = e.pos + (mv * speed + e.vel) * dt; e.vel = e.vel * std::exp(-6.f * dt); pushOut(e.pos.x, e.pos.z, s.radius); e.pos.y = terrainHeight(e.pos.x, e.pos.z);
     if (d < s.range && e.atkCd <= 0) { e.atkCd = s.cd; if (invuln <= 0) { hp -= s.dmg; invuln = 0.9f; hurtFlash = 0.4f; heroVel = to * (7.f / std::max(d, .3f)); burst(hero + Vec3{0, 1.1f, 0}, 25, {.9f, .1f, .12f}, 3.f); } } } }

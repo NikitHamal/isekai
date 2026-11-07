@@ -10,7 +10,7 @@
 namespace isekai {
 enum EnemyKind { EK_GOBLIN = 0, EK_ORC = 1, EK_WOLF = 2 };
 struct Particle { Vec3 p, v; float life, maxLife, size; Vec3 col; };
-struct Enemy { int kind = EK_GOBLIN; Vec3 pos, vel, home; float yaw = 0, hp = 3, maxHp = 3, atkCd = 0, flash = 0, patrolT = 0, hitId = -1, deadT = 0; bool alive = true; };
+struct Enemy { int kind = EK_GOBLIN; Vec3 pos, vel, home; float yaw = 0, hp = 3, maxHp = 3, atkCd = 0, flash = 0, patrolT = 0, hitId = -1, deadT = 0, walkPhase = 0, moveSpeed = 0; bool alive = true; };
 struct Bolt { Vec3 pos, vel; float life = 2.f; };
 struct Flash { Vec3 pos; float t = 0; };
 class GameWorld {

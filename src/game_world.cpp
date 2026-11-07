@@ -20,18 +20,12 @@ void GameWorld::loadAll(const std::string& root) {
   namespace fs = std::filesystem; found = fs::exists(root + "/assets/models");
   for (auto& a : kAssets) { std::string p = root + "/assets/models/" + a.path + ".glb"; auto m = std::make_unique<Model>(); std::string err;
     if (fs::exists(p) && loadGlb(p, *m, err)) { loaded++; models[a.key] = std::move(m); } }
-  // The hero .glb holds the sword in his hand: split it out so the blade can swing independently during slashes.
-  if (models.count("hero")) { Model& h = *models["hero"]; auto sw = std::make_unique<Model>(); sw->textures = h.textures; sw->materials = h.materials; sw->name = "hero_sword";
-    std::vector<Primitive> body; for (auto& p : h.prims) { if (p.node.find("sword") != std::string::npos || p.node.find("Sword") != std::string::npos) sw->prims.push_back(p); else body.push_back(p); }
-    if (!sw->prims.empty()) { h.prims = body; models["hero_sword_part"] = std::move(sw); }
-    Vec3 lo{1e9f, 1e9f, 1e9f}, hi{-1e9f, -1e9f, -1e9f}; for (auto& p : h.prims) for (auto& v : p.pos) { lo = {std::min(lo.x, v.x), std::min(lo.y, v.y), std::min(lo.z, v.z)}; hi = {std::max(hi.x, v.x), std::max(hi.y, v.y), std::max(hi.z, v.z)}; } h.bmin = lo; h.bmax = hi; }
   auto ph = [&](const char* k, Vec3 half, Vec3 c, Vec3 col) { if (!models.count(k)) models[k] = std::make_unique<Model>(makeBoxModel(half, c, col)); };
   ph("hero", {.3f, .9f, .2f}, {0, .9f, 0}, {.12f, .14f, .3f}); ph("paladin", {.4f, 1.f, .3f}, {0, 1.f, 0}, {.6f, .6f, .65f}); ph("guild", {7.5f, 5.f, 5.5f}, {0, 5.f, 0}, {.5f, .42f, .32f});
   ph("keep", {18.f, 12.f, 8.f}, {0, 12.f, 0}, {.5f, .5f, .48f}); ph("wagon", {1.1f, 1.3f, 2.2f}, {0, 1.3f, 0}, {.45f, .33f, .2f}); ph("orc", {.7f, 1.4f, .5f}, {0, 1.4f, 0}, {.3f, .4f, .2f});
   ph("wolf", {.5f, .65f, 1.f}, {0, .65f, 0}, {.12f, .12f, .15f}); ph("goblin", {.35f, .6f, .3f}, {0, .6f, 0}, {.35f, .5f, .15f}); ph("cliff", {4.f, 3.f, 6.f}, {0, 3.f, 0}, {.4f, .45f, .35f});
   ph("tree", {2.5f, 4.5f, 2.5f}, {0, 4.5f, 0}, {.18f, .42f, .12f});
   ph("slime", {.7f, .6f, .7f}, {0, .6f, 0}, {.2f, .9f, .5f}); ph("sign", {.4f, 1.3f, .1f}, {0, 1.3f, 0}, {.3f, .2f, .1f}); ph("chest", {.5f, .35f, .35f}, {0, .35f, 0}, {.4f, .25f, .1f});
-  ph("hero_sword_part", {.03f, .55f, .01f}, {0, .5f, 0}, {.75f, .78f, .85f});
   models["terrain"] = std::make_unique<Model>(makeTerrainModel(110.f, 1.0f));
   models["pine"] = std::make_unique<Model>(makePineTreeModel());
   models["boulder"] = std::make_unique<Model>(makeMossyBoulderModel());

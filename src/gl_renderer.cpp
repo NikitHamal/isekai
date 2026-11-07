@@ -30,7 +30,7 @@ GLRenderer::GPUModel& GLRenderer::upload(const Model* m) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, t.w, t.h, 0, GL_RGBA, GL_UNSIGNED_BYTE, t.rgba.data()); glGenerateMipmap(GL_TEXTURE_2D);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); g.tex.push_back(id); }
-  for (const Primitive& P : m->prims) { GPUPrim gp; gp.mat = P.material; gp.count = (GLsizei)P.idx.size(); std::vector<float> vb; vb.reserve(P.pos.size() * 12);
+  for (const Primitive& P : m->prims) { GPUPrim gp; gp.mat = P.material; gp.partId = P.partId; gp.pivot = P.pivot; gp.count = (GLsizei)P.idx.size(); std::vector<float> vb; vb.reserve(P.pos.size() * 12);
     for (size_t i = 0; i < P.pos.size(); i++) { vb.insert(vb.end(), {P.pos[i].x, P.pos[i].y, P.pos[i].z, P.nrm[i].x, P.nrm[i].y, P.nrm[i].z});
       if (P.uv.size() > i * 2 + 1) vb.insert(vb.end(), {P.uv[i*2], P.uv[i*2+1]}); else vb.insert(vb.end(), {0.f, 0.f});
       if (P.tan.size() > i * 4 + 3) vb.insert(vb.end(), {P.tan[i*4], P.tan[i*4+1], P.tan[i*4+2], P.tan[i*4+3]}); else vb.insert(vb.end(), {1.f, 0.f, 0.f, 1.f}); }
@@ -43,7 +43,9 @@ GLRenderer::GPUModel& GLRenderer::upload(const Model* m) {
 void GLRenderer::drawModel(const Instance& in, const Model& m, GPUModel& g, bool blendPass) {
   glUniformMatrix4fv(U(pbr, "uM"), 1, GL_FALSE, in.M.data()); glUniform3f(U(pbr, "uTint"), in.tint.x, in.tint.y, in.tint.z); glUniform1f(U(pbr, "uEmBoost"), in.emissive);
   glUniform1i(U(pbr, "uGround"), in.ground ? 1 : 0); glUniform1i(U(pbr, "uWind"), in.windSway ? 1 : 0); glUniform1f(U(pbr, "uBaseY"), in.M[13]);
-  for (const GPUPrim& p : g.prims) { if (blendPass != (p.mat >= 0 && m.materials[p.mat].blend)) continue; float has[4] = {0, 0, 0, 0}, base[4] = {.6f, .6f, .6f, 1}, ef[3] = {0, 0, 0}; GLuint ids[4] = {0, 0, 0, 0};
+  for (const GPUPrim& p : g.prims) { if (blendPass != (p.mat >= 0 && m.materials[p.mat].blend)) continue;
+    Mat4 PM = (in.anim.rig == RIG_STATIC) ? in.M : mMul(in.M, partTransform(in.anim, p.partId, p.pivot));
+    glUniformMatrix4fv(U(pbr, "uM"), 1, GL_FALSE, PM.data()); float has[4] = {0, 0, 0, 0}, base[4] = {.6f, .6f, .6f, 1}, ef[3] = {0, 0, 0}; GLuint ids[4] = {0, 0, 0, 0};
     if (p.mat >= 0) { const Material& mt = m.materials[p.mat]; int ti[4] = {mt.base, mt.normal, mt.mr, mt.emissive};
       for (int k = 0; k < 4; k++) if (ti[k] >= 0 && ti[k] < (int)g.tex.size()) { has[k] = 1; ids[k] = g.tex[ti[k]]; }
       for (int k = 0; k < 4; k++) base[k] = mt.baseFactor[k]; for (int k = 0; k < 3; k++) ef[k] = mt.emissiveFactor[k]; }
@@ -52,7 +54,9 @@ void GLRenderer::drawModel(const Instance& in, const Model& m, GPUModel& g, bool
     glBindVertexArray(p.vao); glDrawElements(GL_TRIANGLES, p.count, GL_UNSIGNED_INT, nullptr); } }
 void GLRenderer::drawShadowCaster(const Instance& in, const Model& m, GPUModel& g) {
   glUniformMatrix4fv(U(shadowProg, "uM"), 1, GL_FALSE, in.M.data());
-  for (const GPUPrim& p : g.prims) { if (p.mat >= 0 && m.materials[p.mat].blend) continue; glBindVertexArray(p.vao); glDrawElements(GL_TRIANGLES, p.count, GL_UNSIGNED_INT, nullptr); } }
+  for (const GPUPrim& p : g.prims) { if (p.mat >= 0 && m.materials[p.mat].blend) continue;
+    Mat4 PM = (in.anim.rig == RIG_STATIC) ? in.M : mMul(in.M, partTransform(in.anim, p.partId, p.pivot));
+    glUniformMatrix4fv(U(shadowProg, "uM"), 1, GL_FALSE, PM.data()); glBindVertexArray(p.vao); glDrawElements(GL_TRIANGLES, p.count, GL_UNSIGNED_INT, nullptr); } }
 void GLRenderer::shadowPass(const Scene& s, const Mat4& lvp) {
   glBindFramebuffer(GL_FRAMEBUFFER, shadowFbo); glViewport(0, 0, kShadowRes, kShadowRes); glEnable(GL_DEPTH_TEST); glDepthMask(GL_TRUE); glClear(GL_DEPTH_BUFFER_BIT);
   glDisable(GL_CULL_FACE); glEnable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(2.f, 4.f); glUseProgram(shadowProg); glUniformMatrix4fv(U(shadowProg, "uLVP"), 1, GL_FALSE, lvp.data());
