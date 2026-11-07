@@ -4,7 +4,7 @@ Pipeline: `tools/assets/gen_<slug>.py` -> `assets/models/<category>/<slug>.glb` 
 
 
 ## 1. Environment (`assets/models/environment/`)
-- [ ] `env_ancient_root_archway` (>= 8,000 tris)
+- [x] `env_ancient_root_archway` (>= 8,000 tris)
 - [ ] `env_mossy_forest_cliff_modular` (>= 6,500 tris)
 - [ ] `env_mana_shrine_waystone` (>= 5,000 tris)
 - [ ] `env_ancient_bridge_ruins` (>= 7,000 tris)
