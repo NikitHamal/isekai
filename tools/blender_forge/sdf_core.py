@@ -61,9 +61,11 @@ def add_noise(f, fn, amp):
     """displace the surface by amp * fn(P) (fn in -1..1) -- real geometric surface detail (scales, wrinkles, cracks)."""
     return lambda P: f(P) - amp * fn(P)
 
+H_SCALE = 1.0   # global mesh-density control (voxel size multiplier)
+
 def extract(f, lo, hi, h, keep=None, push=0.0):
     """marching cubes over [lo,hi] with voxel h; returns verts (n,3), tris (m,3) outward wound, smooth normals (n,3)."""
-    lo, hi = A(lo), A(hi); n = np.ceil((hi - lo) / h).astype(int) + 1
+    h = h * H_SCALE; lo, hi = A(lo), A(hi); n = np.ceil((hi - lo) / h).astype(int) + 1
     ax = [lo[i] + np.arange(n[i]) * h for i in range(3)]
     X = np.stack(np.meshgrid(*ax, indexing="ij"), -1).reshape(-1, 3)
     vol = f(X).reshape(n).astype(np.float32)

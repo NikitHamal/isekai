@@ -28,3 +28,6 @@ See `ASSET_CATALOG.md` and `ROADMAP_STATUS.md` for progress.
 
 ## Controls
 WASD move · Mouse look · LMB/F sword combo · RMB/Q Crimson Flare spell · Space roll/jump · Shift sprint
+
+## Character pipeline (v0.7.0)
+Monsters and the Paladin are sculpted as signed-distance-field anatomy (`tools/blender_forge/sdf_*.py`), meshed with marching cubes, unwrapped with Blender Smart UV Project, PBR-baked and exported through `bpy.ops.export_scene.gltf`. Run e.g. `python3 tools/blender_forge/make_mon_orc_warlord_berserker.py` (needs `pip install bpy numpy scipy scikit-image pillow`).

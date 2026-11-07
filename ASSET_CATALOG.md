@@ -73,3 +73,4 @@ Pipeline: `tools/assets/gen_<slug>.py` -> `assets/models/<category>/<slug>.glb` 
 | mon_orc_warlord_berserker | ~94k | sculpted muscular orc, tusks, mohawk, hide kit, rusty spiked pauldrons, bracers, cleaver |
 | mon_forest_goblin_raider | ~60k | lanky goblin, big hooked nose, glowing slit eyes, rusty cap, ragged tunic, jagged blade |
 | mon_shadow_direwolf_alpha | ~81k | digitigrade quadruped, 6.4k fur cards (mane/ruff/tail), glowing amber eyes, claws & fangs |
+| chr_ally_garrick_royal_paladin | ~106k | SDF-sculpted knight in fitted full plate, plumed helm, tabard, cloak, longsword, heater shield |
