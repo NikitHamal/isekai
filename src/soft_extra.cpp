@@ -62,6 +62,30 @@ void renderSceneSoft(Framebuffer& fb, const Scene& s) {
     uint8_t* p = &fb.rgb[(size_t(y) * fb.w + x) * 3];
     p[0] = uint8_t(p[0] * ao); p[1] = uint8_t(p[1] * ao); p[2] = uint8_t(p[2] * ao);
   }
+  auto proj = [&](Vec3 p, float& sx, float& sy, float& cz) {
+    Vec3 d = p - s.cam.eye; cz = dot(d, f); if (cz < 0.2f) return false;
+    sx = (dot(d, r) / (cz * tanH * asp) * .5f + .5f) * fb.w; sy = (.5f - dot(d, up) / (cz * tanH) * .5f) * fb.h; return true;
+  };
+  auto addTri = [&](float x0, float y0, float z0, float a0, float x1, float y1, float z1, float a1, float x2, float y2, float z2, float a2, Vec3 col) {
+    float area = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0); if (std::fabs(area) < 1e-4f) return;
+    int ix0 = std::max(0, int(std::min({x0, x1, x2}))), ix1 = std::min(fb.w - 1, int(std::max({x0, x1, x2})) + 1);
+    int iy0 = std::max(0, int(std::min({y0, y1, y2}))), iy1 = std::min(fb.h - 1, int(std::max({y0, y1, y2})) + 1);
+    for (int y = iy0; y <= iy1; y++) for (int x = ix0; x <= ix1; x++) {
+      float px = x + .5f, py = y + .5f;
+      float w0 = ((x1 - px) * (y2 - py) - (x2 - px) * (y1 - py)) / area, w1 = ((x2 - px) * (y0 - py) - (x0 - px) * (y2 - py)) / area, w2 = 1.f - w0 - w1;
+      if (w0 < 0 || w1 < 0 || w2 < 0) continue;
+      float z = z0 * w0 + z1 * w1 + z2 * w2; if (z > fb.depth[size_t(y) * fb.w + x] + 0.15f) continue;
+      float al = a0 * w0 + a1 * w1 + a2 * w2; uint8_t* p = &fb.rgb[(size_t(y) * fb.w + x) * 3];
+      p[0] = uint8_t(std::min(255.f, p[0] + 255.f * col.x * al)); p[1] = uint8_t(std::min(255.f, p[1] + 255.f * col.y * al)); p[2] = uint8_t(std::min(255.f, p[2] + 255.f * col.z * al));
+    }
+  };
+  for (const RibbonSeg& rb : s.ribbons) {
+    float x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3;
+    if (proj(rb.a0, x0, y0, z0) && proj(rb.b0, x1, y1, z1) && proj(rb.a1, x2, y2, z2) && proj(rb.b1, x3, y3, z3)) {
+      addTri(x0, y0, z0, rb.alpha0 * .5f, x1, y1, z1, rb.alpha0, x3, y3, z3, rb.alpha1, rb.color);
+      addTri(x0, y0, z0, rb.alpha0 * .5f, x3, y3, z3, rb.alpha1, x2, y2, z2, rb.alpha1 * .5f, rb.color);
+    }
+  }
   for (const Fx& fx : s.fx) { Vec3 d = fx.pos - s.cam.eye; float cz = dot(d, f); if (cz < .3f) continue; float sx = (dot(d, r) / (cz * tanH * asp) * .5f + .5f) * fb.w, sy = (.5f - dot(d, up) / (cz * tanH) * .5f) * fb.h;
     splat(fb, sx, sy, std::min(160.f, fx.size * fb.h * .9f / cz), fx.color, fx.alpha); }
   // Dual-pass separable Gaussian bloom on bright emissive/spell pixels
@@ -93,6 +117,9 @@ void renderSceneSoft(Framebuffer& fb, const Scene& s) {
   auto bar = [&](int y, float v, Vec3 c0, Vec3 c1) { rect(fb, x0 - u, y - u, x0 + bw + u, y + bh + u, frame, .9f); rect(fb, x0, y, x0 + bw, y + bh, back, .9f); int w = int(bw * std::clamp(v, 0.f, 1.f));
     for (int i = 0; i < w; i += 1) { float t = float(i) / bw; rect(fb, x0 + i, y, x0 + i + 1, y + bh, vmix(c0, c1, t)); } rect(fb, x0, y, x0 + w, y + u, Vec3{1, 1, 1}, .25f); };
   bar(22 * u, s.hp, {.45f, .02f, .06f}, {.9f, .12f, .15f}); bar(22 * u + bh + 6 * u, s.mana, {.05f, .2f, .55f}, {.25f, .65f, 1.f});
+  Vec3 sc = s.activeSpell == 1 ? Vec3{.25f, .88f, 1.f} : s.activeSpell == 2 ? Vec3{.86f, .45f, 1.f} : Vec3{1.f, .38f, .12f};
+  int sx = x0 + bw + 8 * u, sy = 22 * u + bh + 6 * u;
+  rect(fb, sx - u, sy - u, sx + bh + u, sy + bh + u, frame, .9f); rect(fb, sx, sy, sx + bh, sy + bh, sc, .95f);
   if (s.casting) rect(fb, fb.w / 2 - u, fb.h / 2 - u, fb.w / 2 + u + 1, fb.h / 2 + u + 1, Vec3{1, .85f, .6f}, .9f);
 }
 }  // namespace isekai

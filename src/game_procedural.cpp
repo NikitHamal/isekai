@@ -123,4 +123,34 @@ Model makeGrassFieldModel() {
   }
   m.prims.push_back(std::move(pg)); m.prims.push_back(std::move(pw)); updateBounds(m); return m;
 }
+Model makeRuneCircleModel() {
+  Model m; m.name = "rune_circle";
+  m.textures.push_back(makeNoiseTex({.85f, .85f, .95f}, {1.f, 1.f, 1.f}, 0.3f, 12));
+  Material mt; mt.name = "rune_glow"; mt.base = 0; mt.emissive = 0;
+  mt.emissiveFactor[0] = 1.6f; mt.emissiveFactor[1] = 1.6f; mt.emissiveFactor[2] = 1.6f;
+  m.materials.push_back(mt);
+  Primitive P; P.material = 0; P.node = "runes";
+  auto addRing = [&](float rIn, float rOut, int seg, float y) {
+    uint32_t b = (uint32_t)P.pos.size();
+    for (int i = 0; i <= seg; i++) {
+      float a = i * 2 * kPi / seg, c = std::cos(a), s = std::sin(a);
+      P.pos.push_back({c * rIn, y, s * rIn}); P.nrm.push_back({0, 1, 0}); P.uv.push_back(float(i) / seg); P.uv.push_back(0.f);
+      P.pos.push_back({c * rOut, y, s * rOut}); P.nrm.push_back({0, 1, 0}); P.uv.push_back(float(i) / seg); P.uv.push_back(1.f);
+    }
+    for (int i = 0; i < seg; i++) { uint32_t k = b + i * 2; for (uint32_t idx : {k, k + 2, k + 1, k + 1, k + 2, k + 3}) P.idx.push_back(idx); }
+  };
+  addRing(1.22f, 1.35f, 48, 0.04f);
+  addRing(0.88f, 0.96f, 40, 0.04f);
+  for (int t = 0; t < 2; t++) {
+    for (int i = 0; i < 3; i++) {
+      float a0 = t * kPi / 3.f + i * 2 * kPi / 3.f, a1 = a0 + 2 * kPi / 3.f;
+      Vec3 p0{std::cos(a0) * 1.18f, 0.045f, std::sin(a0) * 1.18f}, p1{std::cos(a1) * 1.18f, 0.045f, std::sin(a1) * 1.18f};
+      Vec3 d = normalize(p1 - p0), n{-d.z * 0.04f, 0.f, d.x * 0.04f}; uint32_t b = (uint32_t)P.pos.size();
+      P.pos.push_back(p0 - n); P.pos.push_back(p0 + n); P.pos.push_back(p1 - n); P.pos.push_back(p1 + n);
+      for (int k = 0; k < 4; k++) { P.nrm.push_back({0, 1, 0}); P.uv.push_back(0.5f); P.uv.push_back(0.5f); }
+      for (uint32_t idx : {b, b + 2, b + 1, b + 1, b + 2, b + 3}) P.idx.push_back(idx);
+    }
+  }
+  m.prims.push_back(std::move(P)); updateBounds(m); return m;
+}
 }  // namespace isekai

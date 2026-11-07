@@ -131,6 +131,17 @@ void GLRenderer::draw(const Scene& s, int w, int h) {
   glActiveTexture(GL_TEXTURE0 + 2); glBindTexture(GL_TEXTURE_2D, bloomTex[1]);
   glDrawArrays(GL_TRIANGLES, 0, 3);
   glEnable(GL_BLEND); glBindVertexArray(0);
+  for (const RibbonSeg& rb : s.ribbons) {
+    float x0, y0, d0, x1, y1, d1, x2, y2, d2, x3, y3, d3;
+    if (project(VP, rb.a0, w, h, x0, y0, d0) && project(VP, rb.b0, w, h, x1, y1, d1) &&
+        project(VP, rb.a1, w, h, x2, y2, d2) && project(VP, rb.b1, w, h, x3, y3, d3)) {
+      HV v0{x0, y0, 2, 2, rb.color.x, rb.color.y, rb.color.z, rb.alpha0};
+      HV v1{x1, y1, 2, 2, rb.color.x, rb.color.y, rb.color.z, rb.alpha0};
+      HV v2{x2, y2, 2, 2, rb.color.x, rb.color.y, rb.color.z, rb.alpha1};
+      HV v3{x3, y3, 2, 2, rb.color.x, rb.color.y, rb.color.z, rb.alpha1};
+      hv.insert(hv.end(), {v0, v1, v3, v0, v3, v2});
+    }
+  }
   for (const Fx& fx : s.fx) { float sx, sy, d; if (project(VP, fx.pos, w, h, sx, sy, d)) { float c[4] = {fx.color.x, fx.color.y, fx.color.z, fx.alpha}; glow(sx, sy, fx.size * h * 0.9f / std::max(d, .5f), c); } }
   glBlendFunc(GL_SRC_ALPHA, GL_ONE); flush(w, h, true); glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); drawHud(s, w, h); flush(w, h, false); glDisable(GL_BLEND); }
 }  // namespace isekai

@@ -59,7 +59,7 @@ void drawInstance(Framebuffer& fb, const Camera& cam, const Model& m, const Mat4
           lit = lit + Vec3{1.15f, 0.72f, 0.35f} * (rim * sb * (0.35f + 0.65f * sh) * ao * 0.55f);
         }
         if (gEnv.lights) lit = lit + softPointLights(wp, n, alb);
-        if (EM && mat) { Vec3 e = sample(*EM, u, v); lit = lit + Vec3{e.x * mat->emissiveFactor[0], e.y * mat->emissiveFactor[1], e.z * mat->emissiveFactor[2]} * 2.2f; }
+        if (EM && mat) { Vec3 e = sample(*EM, u, v); lit = lit + Vec3{e.x * mat->emissiveFactor[0] * tint.x, e.y * mat->emissiveFactor[1] * tint.y, e.z * mat->emissiveFactor[2] * tint.z} * 1.4f; }
         float fog = 1.f - std::exp(-z * gEnv.fogDen); lit = lit * (1 - fog) + gEnv.fogCol * fog;
         fb.depth[di] = z; uint8_t* o = &fb.rgb[di * 3]; o[0] = uint8_t(255 * aces(lit.x)); o[1] = uint8_t(255 * aces(lit.y)); o[2] = uint8_t(255 * aces(lit.z));
       }

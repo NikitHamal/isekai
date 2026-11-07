@@ -30,6 +30,7 @@ static LRESULT CALLBACK wndProc(HWND h, UINT m, WPARAM wp, LPARAM lp) {
     case WM_LBUTTONUP: in.lmb = false; return 0;
     case WM_RBUTTONDOWN: in.rmb = true; return 0;
     case WM_RBUTTONUP: in.rmb = false; return 0;
+    case WM_MOUSEWHEEL: in.wheel += (short)HIWORD(wp) > 0 ? 1 : -1; return 0;
     case WM_ERASEBKGND: return 1;
     case WM_SETCURSOR: if (I->capture && LOWORD(lp) == HTCLIENT) { SetCursor(nullptr); return TRUE; } break;
   }

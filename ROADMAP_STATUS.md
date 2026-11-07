@@ -15,3 +15,4 @@
 - [x] **Q01**: Sculpted 360-degree mountain crags (`env_mossy_forest_cliff_modular.glb`), sacred world tree (`env_sacred_world_tree_canopy.glb`), 3D pine/oak forest, mossy boulders, wind-swaying 3D grass tufts & wildflowers, fixed idle sword glow.
 - [x] **Q02**: Hierarchical multi-part character & monster skeletal animation (`src/animator.hpp`), anatomical sub-mesh `partId` + joint pivots in `model.h`, `gltf_loader.cpp`, and `vork_forge`.
 - [x] **Q03**: Offscreen HDR framebuffer (`sceneFbo`), Screen-Space Ambient Occlusion (SSAO), Dual-Pass Gaussian Bloom (`bloomFbo[2]`), and Golden-Hour Sun Rim-Lighting & Horizon Scattering.
+- [x] **Q04**: Dynamic Isekai spell & combat VFX (3 switchable spells: Crimson Flare, Glacial Fang, Aether Judgment; rotating 3D runic circles; 10-sample curved ribbon sword trails; metallic hit sparks; 40ms hit-stop; camera impulse shake).

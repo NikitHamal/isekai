@@ -7,7 +7,7 @@ enum Key { KEY_BACK = 0x08, KEY_TAB = 0x09, KEY_ENTER = 0x0D, KEY_SHIFT = 0x10, 
 struct Input {
   bool down[256] = {}, pressed[256] = {};   // pressed = went down this frame
   bool lmb = false, rmb = false, lmbPressed = false;
-  float mdx = 0, mdy = 0;                   // mouse delta in pixels this frame (only while mouse is captured)
+  float mdx = 0, mdy = 0; int wheel = 0;                   // mouse delta in pixels this frame (only while mouse is captured)
   int width = 1600, height = 900; bool quit = false, resized = false, focused = true;
 };
 class Window {

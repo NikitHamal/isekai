@@ -29,7 +29,8 @@ void GameWorld::loadAll(const std::string& root) {
   models["terrain"] = std::make_unique<Model>(makeTerrainModel(110.f, 1.0f));
   models["pine"] = std::make_unique<Model>(makePineTreeModel());
   models["boulder"] = std::make_unique<Model>(makeMossyBoulderModel());
-  models["grass"] = std::make_unique<Model>(makeGrassFieldModel()); }
+  models["grass"] = std::make_unique<Model>(makeGrassFieldModel());
+  models["rune"] = std::make_unique<Model>(makeRuneCircleModel()); }
 Mat4 GameWorld::fit(const Model* m, float height, Vec3 pos, float yaw) const {
   float ext = std::max(m->bmax.y - m->bmin.y, 0.01f), s = height / ext; Vec3 c = (m->bmin + m->bmax) * 0.5f;
   return mMul(mTrans(pos), mMul(mRotY(yaw), mMul(mScale(s), mTrans({-c.x, -m->bmin.y, -c.z})))); }
@@ -40,10 +41,17 @@ void GameWorld::spawn(int kind, Vec3 p) {
   Enemy e; e.kind = kind; p.y = gy(p.x, p.z); e.pos = e.home = p; e.patrolT = (rand() % 100) / 10.f; e.hp = e.maxHp = kind == EK_ORC ? 9.f : kind == EK_WOLF ? 4.f : 3.f; enemies.push_back(e); }
 void GameWorld::update(const Input& in, float dt, float) {
   dt = std::min(dt, 0.05f); time += dt;
-  heroUpdate(in, dt); enemiesUpdate(dt); boltsUpdate(dt); cameraUpdate(in, dt);
+  cameraUpdate(in, dt);
   for (auto& p : parts) { p.life -= dt; p.v.y -= 5.f * dt; p.p = p.p + p.v * dt; } parts.erase(std::remove_if(parts.begin(), parts.end(), [](const Particle& p) { return p.life <= 0; }), parts.end());
-  if (slashT <= 0.f) { trail.clear(); }
-  else { for (auto& t : trail) t.second -= dt; trail.erase(std::remove_if(trail.begin(), trail.end(), [](auto& t) { return t.second <= 0; }), trail.end()); }
   for (auto& f : flashes) f.t -= dt; flashes.erase(std::remove_if(flashes.begin(), flashes.end(), [](const Flash& f) { return f.t <= 0; }), flashes.end());
+  if (hitStop > 0.f) { hitStop = std::max(0.f, hitStop - dt); return; }
+  heroUpdate(in, dt); enemiesUpdate(dt); boltsUpdate(dt);
+  if (slashT <= 0.f) { trail.clear(); slashRibbon.clear(); }
+  else {
+    for (auto& t : trail) t.second -= dt;
+    trail.erase(std::remove_if(trail.begin(), trail.end(), [](auto& t) { return t.second <= 0; }), trail.end());
+    for (auto& s : slashRibbon) s.t -= dt;
+    slashRibbon.erase(std::remove_if(slashRibbon.begin(), slashRibbon.end(), [](const SlashPt& s) { return s.t <= 0; }), slashRibbon.end());
+  }
   mana = std::min(100.f, mana + dt * 6.f); }
 }  // namespace isekai

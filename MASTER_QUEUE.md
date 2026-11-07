@@ -27,7 +27,7 @@
     2. **Dual-Pass Gaussian Bloom**: Extract bright emissive pixels (`> 1.1` from spells, glowing runes, forge fire, and lit windows), blur horizontally/vertically, and additively composite.
     3. **Golden-Hour Horizon Scattering & Rim Light**: Warm directional sun rim-lighting on characters and atmospheric depth haze.
 
-- [ ] **Q04 — Dynamic Isekai Spell & Combat VFX (3 Switchable Spells, Rotating Runic Circles, Ribbon Sword Trails, Hit Sparks & Camera Shake)**
+- [x] **Q04 — Dynamic Isekai Spell & Combat VFX (3 Switchable Spells, Rotating Runic Circles, Ribbon Sword Trails, Hit Sparks & Camera Shake)**
   - Upgrade `src/game_hero.cpp` and `src/game_world.cpp`:
     1. **3 Switchable Spells** (keys `1`, `2`, `3` or mouse wheel to select; Right-Click or `Q` to cast; show subtle active spell color indicator next to the top-left Mana bar while keeping the screen clean of text bloat):
        - **Spell 1 — Crimson Flare (Fire)**: Rotating crimson runic circle at the caster's hand/feet, blazing fireball with ember trail, explosive impact shockwave ring, dynamic orange light, and area knockback.

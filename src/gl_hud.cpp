@@ -38,6 +38,10 @@ void GLRenderer::drawHud(const Scene& s, int w, int h) {
     quad(x0, y, x0 + bw * v, y + 2 * ui, hi); };
   const float r0[4] = {.4f, .02f, .06f, 1}, r1[4] = {.92f, .12f, .16f, 1}, b0[4] = {.05f, .2f, .55f, 1}, b1[4] = {.3f, .7f, 1.f, 1};
   bar(y0, s.hp, r0, r1); bar(y0 + bh + 10 * ui, s.mana, b0, b1);
+  const float sc[3][4] = {{1.f, .38f, .12f, .95f}, {.25f, .88f, 1.f, .95f}, {.86f, .45f, 1.f, .95f}};
+  int sp = std::max(0, std::min(2, s.activeSpell));
+  float sx = x0 + bw + 14 * ui, sy = y0 + bh + 10 * ui + bh * 0.5f;
+  disc(sx, sy, 6.5f * ui, frameDk, 16); disc(sx, sy, 5.0f * ui, sc[sp], 16);
   if (s.casting) { const float dot[4] = {1.f, .85f, .6f, .9f}; disc(w * .5f, h * .5f, 2.5f * ui, dot, 12); } }
 }  // namespace isekai
 #endif
