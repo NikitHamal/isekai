@@ -35,10 +35,10 @@ GLRenderer::GPUModel& GLRenderer::upload(const Model* m) {
     const int off[4] = {0, 12, 24, 32}, n[4] = {3, 3, 2, 4}; for (int a = 0; a < 4; a++) { glEnableVertexAttribArray(a); glVertexAttribPointer(a, n[a], GL_FLOAT, GL_FALSE, 48, (void*)(size_t)off[a]); }
     g.prims.push_back(gp); }
   glBindVertexArray(0); return models[m] = std::move(g); }
-void GLRenderer::drawModel(const Instance& in, const Model& m, GPUModel& g) {
+void GLRenderer::drawModel(const Instance& in, const Model& m, GPUModel& g, bool blendPass) {
   glUniformMatrix4fv(U(pbr, "uM"), 1, GL_FALSE, in.M.data()); glUniform3f(U(pbr, "uTint"), in.tint.x, in.tint.y, in.tint.z); glUniform1f(U(pbr, "uEmBoost"), in.emissive);
   glUniform1i(U(pbr, "uGround"), in.ground ? 1 : 0);
-  for (const GPUPrim& p : g.prims) { float has[4] = {0, 0, 0, 0}, base[4] = {.6f, .6f, .6f, 1}, ef[3] = {0, 0, 0}; GLuint ids[4] = {0, 0, 0, 0};
+  for (const GPUPrim& p : g.prims) { if (blendPass != (p.mat >= 0 && m.materials[p.mat].blend)) continue; float has[4] = {0, 0, 0, 0}, base[4] = {.6f, .6f, .6f, 1}, ef[3] = {0, 0, 0}; GLuint ids[4] = {0, 0, 0, 0};
     if (p.mat >= 0) { const Material& mt = m.materials[p.mat]; int ti[4] = {mt.base, mt.normal, mt.mr, mt.emissive};
       for (int k = 0; k < 4; k++) if (ti[k] >= 0 && ti[k] < (int)g.tex.size()) { has[k] = 1; ids[k] = g.tex[ti[k]]; }
       for (int k = 0; k < 4; k++) base[k] = mt.baseFactor[k]; for (int k = 0; k < 3; k++) ef[k] = mt.emissiveFactor[k]; }
@@ -59,7 +59,10 @@ void GLRenderer::draw(const Scene& s, int w, int h, float fps) {
   for (int i = 0; i < nl; i++) { const Light& L = s.lights[i]; lp[i*3] = L.pos.x; lp[i*3+1] = L.pos.y; lp[i*3+2] = L.pos.z; lc[i*3] = L.color.x; lc[i*3+1] = L.color.y; lc[i*3+2] = L.color.z; lr[i] = L.radius; }
   glUniform3fv(U(pbr, "uLP"), 8, lp); glUniform3fv(U(pbr, "uLC"), 8, lc); glUniform1i(U(pbr, "uNL"), nl); for (int i = 0; i < 8; i++) glUniform1f(U(pbr, ("uLR[" + std::to_string(i) + "]").c_str()), lr[i]);
   glUniform1i(U(pbr, "uAlb"), 0); glUniform1i(U(pbr, "uNrm"), 1); glUniform1i(U(pbr, "uMR"), 2); glUniform1i(U(pbr, "uEm"), 3);
-  for (const Instance& in : s.inst) if (in.model) drawModel(in, *in.model, upload(in.model));
+  for (const Instance& in : s.inst) if (in.model) drawModel(in, *in.model, upload(in.model), false);
+  glEnable(GL_BLEND); glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); glDepthMask(GL_FALSE);  // translucent wings / slime gel
+  for (const Instance& in : s.inst) if (in.model) drawModel(in, *in.model, upload(in.model), true);
+  glDepthMask(GL_TRUE);
   glDisable(GL_DEPTH_TEST); glEnable(GL_BLEND); glBindVertexArray(0);
   for (const Fx& fx : s.fx) { float sx, sy, d; if (project(VP, fx.pos, w, h, sx, sy, d)) { float c[4] = {fx.color.x, fx.color.y, fx.color.z, fx.alpha}; glow(sx, sy, fx.size * h * 0.9f / std::max(d, .5f), c); } }
   glBlendFunc(GL_SRC_ALPHA, GL_ONE); flush(w, h, true); glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); drawHud(s, w, h, fps); flush(w, h, false); glDisable(GL_BLEND); }

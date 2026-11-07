@@ -18,7 +18,7 @@ class GLRenderer {
   struct GPUModel { std::vector<GPUPrim> prims; std::vector<GLuint> tex; };
   GPUModel& upload(const Model* m);
   GLint U(GLuint prog, const char* n);
-  void drawModel(const Instance& in, const Model& m, GPUModel& g);
+  void drawModel(const Instance& in, const Model& m, GPUModel& g, bool blendPass);
   // HUD helpers (gl_hud.cpp)
   void quad(float x0, float y0, float x1, float y1, const float* c);
   void glow(float x, float y, float r, const float* c);

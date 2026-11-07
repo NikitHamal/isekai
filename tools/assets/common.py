@@ -36,3 +36,9 @@ def wing(root, ang, L, W, bend=.15, n=36, m=22, flip=False):
         for j in range(m):
             t = j / (m - 1) * 2 - 1; P[i, j] = root + d * L * s + p * t * w * (1.0 + .3 * s * (t > 0)) + np.array([0, 0, 1]) * (-bend * s * s * L + .02 * np.cos(t * 2) * w)
     return grid(P, closed_u=False, flip=flip)
+LIME = Material("limestone", "voronoi_stone", (.72, .66, .45), (.45, .42, .28), rough=.95, scale=4, bump=3.5, seed=51)
+GOBSKIN = Material("goblin_skin", "fbm_noise", (.42, .55, .2), (.25, .35, .1), rough=.7, scale=6, bump=1.5, seed=52)
+AMBEREYE = Material("goblin_eye", "runic_glow", (1, .65, .1), (.9, .4, .05), rough=.2, emissive=(1, .6, .1), scale=3, seed=53)
+SLIMEGEL = Material("slime_gel", "fbm_noise", (.25, .85, .5), (.1, .6, .4), rough=.08, emissive=(.05, .3, .15), scale=3, bump=.5, alpha=.62, seed=54)
+MANA = Material("mana_core", "runic_glow", (.4, 1, .8), (.1, .8, .6), rough=.1, emissive=(.4, 1, .8), scale=3, seed=55)
+CRYSTAL = Material("mana_crystal", "runic_glow", (.5, .9, 1), (.2, .6, 1), rough=.1, emissive=(.3, .8, 1), scale=4, seed=56)

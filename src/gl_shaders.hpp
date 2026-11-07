@@ -36,7 +36,7 @@ void main(){
   for(int i=0;i<uNL;i++){ vec3 d=uLP[i]-vWP; float dist=length(d); float att=clamp(1.0-pow(dist/uLR[i],2.0),0.0,1.0); att*=att/(1.0+dist*dist*0.35);
     col+=brdf(N,V,d/dist,uLC[i]*att,alb,rough,met); }
   col+=em; float dist=length(uCam-vWP); float fog=1.0-exp(-pow(dist*0.016,1.25)); col=mix(col,uHoriz*0.85,clamp(fog,0.0,1.0));
-  col=aces(col*0.85); oC=vec4(pow(col,vec3(1.0/2.2)),1.0); })";
+  col=aces(col*0.85); oC=vec4(pow(col,vec3(1.0/2.2)),uBase.a); })";
 static const char* kSkyVS = R"(#version 330 core
 out vec2 vP; void main(){ vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2); vP=p*2.0-1.0; gl_Position=vec4(vP,0.9999,1.0); })";
 static const char* kSkyFS = R"(#version 330 core

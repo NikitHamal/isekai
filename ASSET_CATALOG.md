@@ -5,7 +5,7 @@ Pipeline: `tools/assets/gen_<slug>.py` -> `assets/models/<category>/<slug>.glb` 
 
 ## 1. Environment (`assets/models/environment/`)
 - [x] `env_ancient_root_archway` (>= 8,000 tris)
-- [ ] `env_mossy_forest_cliff_modular` (>= 6,500 tris)
+- [x] `env_mossy_forest_cliff_modular` (>= 6,500 tris)
 - [ ] `env_mana_shrine_waystone` (>= 5,000 tris)
 - [ ] `env_ancient_bridge_ruins` (>= 7,000 tris)
 - [ ] `env_sacred_world_tree_canopy` (>= 9,000 tris)
@@ -32,8 +32,8 @@ Pipeline: `tools/assets/gen_<slug>.py` -> `assets/models/<category>/<slug>.glb` 
 - [ ] `veh_armored_warhorse` (>= 9,000 tris)
 
 ## 5. Monsters (`assets/models/monsters/`)
-- [ ] `mon_forest_goblin_raider` (>= 8,000 tris)
-- [ ] `mon_emerald_mana_slime_king` (>= 5,000 tris)
+- [x] `mon_forest_goblin_raider` (>= 8,000 tris)
+- [x] `mon_emerald_mana_slime_king` (>= 5,000 tris)
 - [ ] `mon_shadow_direwolf_alpha` (>= 9,000 tris)
 - [ ] `mon_ancient_stone_golem` (>= 9,500 tris)
 - [ ] `mon_orc_warlord_berserker` (>= 10,000 tris)

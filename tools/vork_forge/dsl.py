@@ -142,7 +142,7 @@ def sdf_sculpt(primitives, resolution=64, smooth_k=0.15, pad=0.3):
     from skimage.measure import marching_cubes
     pts = []
     for p in primitives:
-        q = p[1:] if p[0] != '-' else p[2][1:]
+        q = p[1:] if p[0] != '-' else p[1][1:]
         for e in q:
             if np.ndim(e) == 1 and len(e) == 3: pts.append(np.asarray(e, float))
         rr = [e for e in q if np.ndim(e) == 0]; ee = [e for e in q if np.ndim(e) == 1 and len(e) == 3]
