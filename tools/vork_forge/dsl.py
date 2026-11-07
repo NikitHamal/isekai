@@ -44,7 +44,7 @@ class Node:
 def node(name, mesh=None, material=None, children=(), pos=(0,0,0), rot=(0,0,0), scale=(1,1,1)):
     return Node(name, mesh, material, list(children), pos, rot, scale)
 
-def grid(P, uscale=1.0, vscale=1.0, closed_u=True, cap=False):
+def grid(P, uscale=1.0, vscale=1.0, closed_u=True, cap=False, flip=False):
     """P: (rows, cols, 3) -> quad-grid mesh. Wraps columns when closed_u."""
     r, c, _ = P.shape; V = P.reshape(-1, 3)
     u = np.linspace(0, uscale, c); v = np.linspace(0, vscale, r)
@@ -53,13 +53,14 @@ def grid(P, uscale=1.0, vscale=1.0, closed_u=True, cap=False):
     i, j = np.meshgrid(np.arange(r-1), np.arange(cc), indexing="ij"); a = (i*c+j).ravel(); b = (i*c+(j+1)).ravel()
     d = ((i+1)*c+j).ravel(); e = ((i+1)*c+(j+1)).ravel()
     F = np.vstack([np.stack([a, d, b], 1), np.stack([b, d, e], 1)])
-    m = Mesh(V, F, UV)
+    m = Mesh(V, F[:, [0, 2, 1]] if flip else F, UV)
     if cap:
-        for row, flip in ((0, True), (r-1, False)):
-            ring = P[row, :-1] if closed_u else P[row]; ctr = ring.mean(0); n0 = 0
-            ids = np.arange(len(ring)); fc = np.stack([np.full_like(ids, n0), ids + n0 + 1, (ids + 1) % len(ring) + n0 + 1], 1)
-            if flip: fc = fc[:, [0, 2, 1]]
-            m = merge([m, Mesh(np.vstack([ctr, ring]), fc, np.zeros((len(ring)+1, 2)) + .5)])
+        for row, o in ((0, P[0].mean(0) - P[1].mean(0)), (r-1, P[-1].mean(0) - P[-2].mean(0))):
+            ring = P[row, :-1] if closed_u else P[row]; ctr = ring.mean(0); k = len(ring); ids = np.arange(k)
+            fc = np.stack([np.zeros(k, int), ids + 1, (ids + 1) % k + 1], 1)
+            nrm = np.cross(ring - ctr, np.roll(ring, -1, 0) - ctr).sum(0)
+            if nrm @ o < 0: fc = fc[:, [0, 2, 1]]
+            m = merge([m, Mesh(np.vstack([ctr, ring]), fc, np.zeros((k+1, 2)) + .5)])
     return m
 
 def box(size=(1,1,1), pos=(0,0,0), rot=(0,0,0), seg=1):
@@ -71,12 +72,12 @@ def box(size=(1,1,1), pos=(0,0,0), rot=(0,0,0), seg=1):
             g = np.linspace(-.5, .5, seg+1); A, B = np.meshgrid(g, g); P = np.zeros((seg+1, seg+1, 3))
             P[..., ax] = .5*sg; P[..., a] = A; P[..., b] = B
             m = grid(P, closed_u=False)
-            if sg < 0: m.F = m.F[:, [0, 2, 1]]
+            if sg > 0: m.F = m.F[:, [0, 2, 1]]
             faces.append(m)
     return merge(faces).tf(pos, rot, size)
 
 def sphere(r=1.0, pos=(0,0,0), scale=(1,1,1), rings=24, sides=32, rot=(0,0,0)):
-    th = np.linspace(0, np.pi, rings+1)[:, None]; ph = np.linspace(0, 2*np.pi, sides+1)[None]
+    th = np.linspace(np.pi, 0, rings+1)[:, None]; ph = np.linspace(0, 2*np.pi, sides+1)[None]
     P = np.stack([r*np.sin(th)*np.cos(ph), r*np.cos(th)+0*ph, r*np.sin(th)*np.sin(ph)], -1)
     return grid(P).tf(pos, rot, scale)
 
@@ -88,7 +89,7 @@ def cylinder(r=0.5, h=1.0, pos=(0,0,0), r2=None, sides=32, rings=1, rot=(0,0,0),
 def torus(R=1.0, r=0.2, pos=(0,0,0), rot=(0,0,0), seg=48, sides=16, scale=(1,1,1)):
     u = np.linspace(0, 2*np.pi, seg+1)[:, None]; v = np.linspace(0, 2*np.pi, sides+1)[None]
     P = np.stack([(R + r*np.cos(v))*np.cos(u), r*np.sin(v)+0*u, (R + r*np.cos(v))*np.sin(u)], -1)
-    return grid(P).tf(pos, rot, scale)
+    return grid(P, flip=True).tf(pos, rot, scale)
 
 def lathe(profile_2d, segments=48, bevel=True, pos=(0,0,0), rot=(0,0,0), scale=(1,1,1)):
     """profile_2d: [(radius, y), ...]; spins about Y. Bevel = Chaikin-rounded profile."""
@@ -131,7 +132,7 @@ def spline_tube(points, radii, twist=0.0, rings=48, sides=24, bark_disp=0.04, se
     P = C[:, None] + dirs * rad[..., None]
     if bark_disp: P = P + dirs * (_hash_noise(P.reshape(-1, 3), seed, 9.0).reshape(rings, sides+1, 1) * bark_disp * rad[..., None] * 4)
     P[:, -1] = P[:, 0]
-    return grid(P, uscale=2.0, vscale=max(1.0, np.linalg.norm(np.diff(C, axis=0), axis=1).sum()), cap=cap)
+    return grid(P, uscale=2.0, vscale=max(1.0, np.linalg.norm(np.diff(C, axis=0), axis=1).sum()), cap=cap, flip=True)
 
 def _smin(a, b, k): h = np.clip(.5 + .5*(b-a)/k, 0, 1); return b*(1-h) + a*h - k*h*(1-h)
 
@@ -163,7 +164,7 @@ def sdf_sculpt(primitives, resolution=64, smooth_k=0.15, pad=0.3):
     sp = [(ax[i][1]-ax[i][0]) for i in range(3)]
     v, f, n, _ = marching_cubes(d, 0.0, spacing=sp); v = v + lo
     n = np.abs(n) / (np.abs(n).sum(1, keepdims=True) + 1e-9); uv = v[:, [0, 2]] * n[:, 1:2] + v[:, [0, 1]] * n[:, 2:3] + v[:, [2, 1]] * n[:, 0:1]
-    return Mesh(v, f[:, [0, 2, 1]], uv * 0.5)
+    return Mesh(v, f, uv * 0.5)
 
 def subdivide(mesh, levels=2, smooth=0.5):
     """1->4 midpoint split followed by Laplacian relaxation (Loop-like smoothing)."""

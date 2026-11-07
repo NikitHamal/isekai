@@ -8,4 +8,4 @@
 - [ ] **E6**: Combat, HUD (hearts, FPS, minimap, lock-on), sound
 
 ## Session log
-- Session 1: scaffolds (catalog, roadmap, CI, CMake, vork_forge DSL).
+- Session 1: scaffolds, vork_forge DSL+PBR baker+GLB compiler+QA, E1+E2 done; 6 assets (archway, heart, signpost, lantern, chest, longsword). Fixed primitive winding (outward normals).

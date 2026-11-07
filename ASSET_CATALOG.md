@@ -46,7 +46,7 @@ Pipeline: `tools/assets/gen_<slug>.py` -> `assets/models/<category>/<slug>.glb` 
 - [ ] `enm_imperial_crossbow_sniper` (>= 8,500 tris)
 
 ## 7. Weapons (`assets/models/weapons/`)
-- [ ] `wpn_aetherblade_longsword` (>= 4,000 tris)
+- [x] `wpn_aetherblade_longsword` (>= 4,000 tris)
 - [ ] `wpn_royal_crest_heater_shield` (>= 3,500 tris)
 - [ ] `wpn_archmage_celestial_staff` (>= 4,500 tris)
 - [ ] `wpn_elven_wind_recurve_bow` (>= 3,500 tris)
@@ -54,7 +54,7 @@ Pipeline: `tools/assets/gen_<slug>.py` -> `assets/models/<category>/<slug>.glb` 
 
 ## 8. Props (`assets/models/props/`)
 - [x] `prp_crimson_heart_container` (>= 3,000 tris)
-- [ ] `prp_ornate_treasure_chest` (>= 4,000 tris)
+- [x] `prp_ornate_treasure_chest` (>= 4,000 tris)
 - [x] `prp_wooden_wayfinder_signpost` (>= 3,000 tris)
-- [ ] `prp_hanging_acorn_amber_lantern` (>= 3,500 tris)
+- [x] `prp_hanging_acorn_amber_lantern` (>= 3,500 tris)
 - [ ] `prp_medieval_market_barrels_crates` (>= 4,500 tris)
