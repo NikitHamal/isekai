@@ -1,0 +1,162 @@
+{
+ "env_ancient_root_archway": {
+  "cat": "environment",
+  "min_tris": 8000
+ },
+ "env_mossy_forest_cliff_modular": {
+  "cat": "environment",
+  "min_tris": 6500
+ },
+ "env_mana_shrine_waystone": {
+  "cat": "environment",
+  "min_tris": 5000
+ },
+ "env_ancient_bridge_ruins": {
+  "cat": "environment",
+  "min_tris": 7000
+ },
+ "env_sacred_world_tree_canopy": {
+  "cat": "environment",
+  "min_tris": 9000
+ },
+ "chr_hero_kaelen_adventurer": {
+  "cat": "characters",
+  "min_tris": 10000
+ },
+ "chr_ally_lumina_spirit_fairy": {
+  "cat": "characters",
+  "min_tris": 3500
+ },
+ "chr_ally_sylphie_elf_mage": {
+  "cat": "characters",
+  "min_tris": 10000
+ },
+ "chr_ally_garrick_royal_paladin": {
+  "cat": "characters",
+  "min_tris": 10000
+ },
+ "chr_ally_lyra_beastkin_rogue": {
+  "cat": "characters",
+  "min_tris": 9500
+ },
+ "bld_valoria_adventurer_guild": {
+  "cat": "buildings",
+  "min_tris": 8500
+ },
+ "bld_royal_citadel_keep": {
+  "cat": "buildings",
+  "min_tris": 10000
+ },
+ "bld_blacksmith_forge_shop": {
+  "cat": "buildings",
+  "min_tris": 7500
+ },
+ "bld_apothecary_magic_tower": {
+  "cat": "buildings",
+  "min_tris": 8000
+ },
+ "bld_medieval_tavern_inn": {
+  "cat": "buildings",
+  "min_tris": 8000
+ },
+ "veh_merchant_covered_wagon": {
+  "cat": "vehicles",
+  "min_tris": 6500
+ },
+ "veh_royal_war_chariot": {
+  "cat": "vehicles",
+  "min_tris": 7000
+ },
+ "veh_siege_trebuchet": {
+  "cat": "vehicles",
+  "min_tris": 7500
+ },
+ "veh_griffon_mount_armored": {
+  "cat": "vehicles",
+  "min_tris": 10000
+ },
+ "veh_armored_warhorse": {
+  "cat": "vehicles",
+  "min_tris": 9000
+ },
+ "mon_forest_goblin_raider": {
+  "cat": "monsters",
+  "min_tris": 8000
+ },
+ "mon_emerald_mana_slime_king": {
+  "cat": "monsters",
+  "min_tris": 5000
+ },
+ "mon_shadow_direwolf_alpha": {
+  "cat": "monsters",
+  "min_tris": 9000
+ },
+ "mon_ancient_stone_golem": {
+  "cat": "monsters",
+  "min_tris": 9500
+ },
+ "mon_orc_warlord_berserker": {
+  "cat": "monsters",
+  "min_tris": 10000
+ },
+ "mon_ignis_elder_wyvern": {
+  "cat": "monsters",
+  "min_tris": 14000
+ },
+ "enm_empire_halberdier": {
+  "cat": "enemies",
+  "min_tris": 8500
+ },
+ "enm_dark_cult_necromancer": {
+  "cat": "enemies",
+  "min_tris": 8500
+ },
+ "enm_cursed_skeleton_knight": {
+  "cat": "enemies",
+  "min_tris": 8500
+ },
+ "enm_imperial_crossbow_sniper": {
+  "cat": "enemies",
+  "min_tris": 8500
+ },
+ "wpn_aetherblade_longsword": {
+  "cat": "weapons",
+  "min_tris": 4000
+ },
+ "wpn_royal_crest_heater_shield": {
+  "cat": "weapons",
+  "min_tris": 3500
+ },
+ "wpn_archmage_celestial_staff": {
+  "cat": "weapons",
+  "min_tris": 4500
+ },
+ "wpn_elven_wind_recurve_bow": {
+  "cat": "weapons",
+  "min_tris": 3500
+ },
+ "wpn_dwarven_runic_warhammer": {
+  "cat": "weapons",
+  "min_tris": 4000
+ },
+ "prp_crimson_heart_container": {
+  "cat": "props",
+  "min_tris": 3000
+ },
+ "prp_ornate_treasure_chest": {
+  "cat": "props",
+  "min_tris": 4000
+ },
+ "prp_wooden_wayfinder_signpost": {
+  "cat": "props",
+  "min_tris": 3000
+ },
+ "prp_hanging_acorn_amber_lantern": {
+  "cat": "props",
+  "min_tris": 3500
+ },
+ "prp_medieval_market_barrels_crates": {
+  "cat": "props",
+  "min_tris": 4500
+ }
+}
