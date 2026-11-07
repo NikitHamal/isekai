@@ -44,4 +44,7 @@ class GameWorld {
 };
 Model makeBoxModel(Vec3 half, Vec3 center, Vec3 rgb);
 Model makeTerrainModel(float half, float step);
+Model makePineTreeModel();
+Model makeMossyBoulderModel();
+Model makeGrassFieldModel();
 }  // namespace isekai

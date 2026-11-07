@@ -11,3 +11,5 @@
 - Session 1: scaffolds, vork_forge DSL+PBR baker+GLB compiler+QA, E1+E2.
 - Session 2 (REVERTED): fairy, heart containers, root archway, acorn lanterns, HUD bloat — all cloned Zelda gimmicks, purged in session 3.
 - Session 3: purge + shadow-mapped realistic renderer + sword/magic combat + Valoria Kingdom assets (v0.3.0).
+
+- [x] **Q01**: Sculpted 360-degree mountain crags (`env_mossy_forest_cliff_modular.glb`), sacred world tree (`env_sacred_world_tree_canopy.glb`), 3D pine/oak forest, mossy boulders, wind-swaying 3D grass tufts & wildflowers, fixed idle sword glow.

@@ -7,7 +7,8 @@ static const struct { const char* key; const char* path; } kAssets[] = {
   {"hero", "characters/chr_hero_kaelen_adventurer"}, {"paladin", "characters/chr_ally_garrick_royal_paladin"},
   {"guild", "buildings/bld_valoria_adventurer_guild"}, {"keep", "buildings/bld_royal_citadel_keep"}, {"wagon", "vehicles/veh_merchant_covered_wagon"},
   {"orc", "monsters/mon_orc_warlord_berserker"}, {"wolf", "monsters/mon_shadow_direwolf_alpha"}, {"goblin", "monsters/mon_forest_goblin_raider"},
-  {"slime", "monsters/mon_emerald_mana_slime_king"}, {"cliff", "environment/env_mossy_forest_cliff_modular"}, {"sign", "props/prp_wooden_wayfinder_signpost"},
+  {"slime", "monsters/mon_emerald_mana_slime_king"}, {"cliff", "environment/env_mossy_forest_cliff_modular"},
+  {"tree", "environment/env_sacred_world_tree_canopy"}, {"sign", "props/prp_wooden_wayfinder_signpost"},
   {"chest", "props/prp_ornate_treasure_chest"}, {"sword", "weapons/wpn_aetherblade_longsword"}, {"shield", "weapons/wpn_royal_crest_heater_shield"}};
 static float gy(float x, float z) { return terrainHeight(x, z); }
 GameWorld::GameWorld(const std::string& root) {
@@ -28,9 +29,13 @@ void GameWorld::loadAll(const std::string& root) {
   ph("hero", {.3f, .9f, .2f}, {0, .9f, 0}, {.12f, .14f, .3f}); ph("paladin", {.4f, 1.f, .3f}, {0, 1.f, 0}, {.6f, .6f, .65f}); ph("guild", {7.5f, 5.f, 5.5f}, {0, 5.f, 0}, {.5f, .42f, .32f});
   ph("keep", {18.f, 12.f, 8.f}, {0, 12.f, 0}, {.5f, .5f, .48f}); ph("wagon", {1.1f, 1.3f, 2.2f}, {0, 1.3f, 0}, {.45f, .33f, .2f}); ph("orc", {.7f, 1.4f, .5f}, {0, 1.4f, 0}, {.3f, .4f, .2f});
   ph("wolf", {.5f, .65f, 1.f}, {0, .65f, 0}, {.12f, .12f, .15f}); ph("goblin", {.35f, .6f, .3f}, {0, .6f, 0}, {.35f, .5f, .15f}); ph("cliff", {4.f, 3.f, 6.f}, {0, 3.f, 0}, {.4f, .45f, .35f});
+  ph("tree", {2.5f, 4.5f, 2.5f}, {0, 4.5f, 0}, {.18f, .42f, .12f});
   ph("slime", {.7f, .6f, .7f}, {0, .6f, 0}, {.2f, .9f, .5f}); ph("sign", {.4f, 1.3f, .1f}, {0, 1.3f, 0}, {.3f, .2f, .1f}); ph("chest", {.5f, .35f, .35f}, {0, .35f, 0}, {.4f, .25f, .1f});
   ph("hero_sword_part", {.03f, .55f, .01f}, {0, .5f, 0}, {.75f, .78f, .85f});
-  models["terrain"] = std::make_unique<Model>(makeTerrainModel(110.f, 1.0f)); }
+  models["terrain"] = std::make_unique<Model>(makeTerrainModel(110.f, 1.0f));
+  models["pine"] = std::make_unique<Model>(makePineTreeModel());
+  models["boulder"] = std::make_unique<Model>(makeMossyBoulderModel());
+  models["grass"] = std::make_unique<Model>(makeGrassFieldModel()); }
 Mat4 GameWorld::fit(const Model* m, float height, Vec3 pos, float yaw) const {
   float ext = std::max(m->bmax.y - m->bmin.y, 0.01f), s = height / ext; Vec3 c = (m->bmin + m->bmax) * 0.5f;
   return mMul(mTrans(pos), mMul(mRotY(yaw), mMul(mScale(s), mTrans({-c.x, -m->bmin.y, -c.z})))); }
@@ -43,7 +48,8 @@ void GameWorld::update(const Input& in, float dt, float) {
   dt = std::min(dt, 0.05f); time += dt;
   heroUpdate(in, dt); enemiesUpdate(dt); boltsUpdate(dt); cameraUpdate(in, dt);
   for (auto& p : parts) { p.life -= dt; p.v.y -= 5.f * dt; p.p = p.p + p.v * dt; } parts.erase(std::remove_if(parts.begin(), parts.end(), [](const Particle& p) { return p.life <= 0; }), parts.end());
-  for (auto& t : trail) t.second -= dt; trail.erase(std::remove_if(trail.begin(), trail.end(), [](auto& t) { return t.second <= 0; }), trail.end());
+  if (slashT <= 0.f) { trail.clear(); }
+  else { for (auto& t : trail) t.second -= dt; trail.erase(std::remove_if(trail.begin(), trail.end(), [](auto& t) { return t.second <= 0; }), trail.end()); }
   for (auto& f : flashes) f.t -= dt; flashes.erase(std::remove_if(flashes.begin(), flashes.end(), [](const Flash& f) { return f.t <= 0; }), flashes.end());
   mana = std::min(100.f, mana + dt * 6.f); }
 }  // namespace isekai

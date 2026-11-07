@@ -8,6 +8,7 @@ struct Instance {
   const Model* model = nullptr; Mat4 M{}; float emissive = 1.f; Vec3 tint{1, 1, 1};
   bool ground = false;      // splat-mapped terrain
   bool castShadow = true;
+  bool windSway = false;    // vertex wind sway for grass tufts, wildflowers & tree canopies
 };
 struct Light { Vec3 pos; Vec3 color; float radius = 8; };
 struct Fx { Vec3 pos; float size = 0.2f; Vec3 color{1, .8f, .3f}; float alpha = 1.f; };   // additive glow sprite

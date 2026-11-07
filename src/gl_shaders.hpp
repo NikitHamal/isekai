@@ -7,8 +7,10 @@ static const char* kShadowFS = R"(#version 330 core
 void main(){})";
 static const char* kPbrVS = R"(#version 330 core
 layout(location=0) in vec3 aP; layout(location=1) in vec3 aN; layout(location=2) in vec2 aUV; layout(location=3) in vec4 aT;
-uniform mat4 uM; uniform mat4 uVP; out vec3 vWP; out vec3 vN; out vec2 vUV; out vec4 vT;
-void main(){ vec4 w = uM*vec4(aP,1.0); vWP=w.xyz; vN=mat3(uM)*aN; vT=vec4(mat3(uM)*aT.xyz,aT.w); vUV=aUV; gl_Position=uVP*w; })";
+uniform mat4 uM; uniform mat4 uVP; uniform float uTime; uniform int uWind; out vec3 vWP; out vec3 vN; out vec2 vUV; out vec4 vT;
+void main(){ vec4 w = uM*vec4(aP,1.0);
+  if(uWind==1){ float sw=sin(uTime*2.3+w.x*0.65+w.z*0.55)*0.11*clamp(aUV.y,0.0,1.0); w.x+=sw; w.z+=sw*0.45; }
+  vWP=w.xyz; vN=mat3(uM)*aN; vT=vec4(mat3(uM)*aT.xyz,aT.w); vUV=aUV; gl_Position=uVP*w; })";
 static const char* kPbrFS = R"(#version 330 core
 in vec3 vWP; in vec3 vN; in vec2 vUV; in vec4 vT; out vec4 oC;
 uniform sampler2D uAlb; uniform sampler2D uNrm; uniform sampler2D uMR; uniform sampler2D uEm; uniform sampler2D uShadow; uniform vec4 uHas; uniform vec4 uBase; uniform vec3 uEmF;

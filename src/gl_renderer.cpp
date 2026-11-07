@@ -42,7 +42,7 @@ GLRenderer::GPUModel& GLRenderer::upload(const Model* m) {
   glBindVertexArray(0); return models[m] = std::move(g); }
 void GLRenderer::drawModel(const Instance& in, const Model& m, GPUModel& g, bool blendPass) {
   glUniformMatrix4fv(U(pbr, "uM"), 1, GL_FALSE, in.M.data()); glUniform3f(U(pbr, "uTint"), in.tint.x, in.tint.y, in.tint.z); glUniform1f(U(pbr, "uEmBoost"), in.emissive);
-  glUniform1i(U(pbr, "uGround"), in.ground ? 1 : 0); glUniform1f(U(pbr, "uBaseY"), in.M[13]);
+  glUniform1i(U(pbr, "uGround"), in.ground ? 1 : 0); glUniform1i(U(pbr, "uWind"), in.windSway ? 1 : 0); glUniform1f(U(pbr, "uBaseY"), in.M[13]);
   for (const GPUPrim& p : g.prims) { if (blendPass != (p.mat >= 0 && m.materials[p.mat].blend)) continue; float has[4] = {0, 0, 0, 0}, base[4] = {.6f, .6f, .6f, 1}, ef[3] = {0, 0, 0}; GLuint ids[4] = {0, 0, 0, 0};
     if (p.mat >= 0) { const Material& mt = m.materials[p.mat]; int ti[4] = {mt.base, mt.normal, mt.mr, mt.emissive};
       for (int k = 0; k < 4; k++) if (ti[k] >= 0 && ti[k] < (int)g.tex.size()) { has[k] = 1; ids[k] = g.tex[ti[k]]; }
