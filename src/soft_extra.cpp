@@ -24,9 +24,10 @@ Vec3 softPointLights(Vec3 wp, Vec3 n, Vec3 alb) {
 static void shadowPass(ShadowMap& sm, const Scene& s) {
   sm.n = 2048; sm.d.assign(size_t(sm.n) * sm.n, -1e9f); sm.focus = s.focus; Vec3 S = normalize(s.sunDir); sm.S = S; sm.lx = normalize(cross({0, 1, 0}, S)); sm.ly = cross(S, sm.lx);
   for (const Instance& in : s.inst) { if (!in.model || !in.castShadow) continue;
-    for (const Primitive& P : in.model->prims) { if (P.material >= 0 && in.model->materials[P.material].blend) continue;
-      Mat4 PM = (in.anim.rig == RIG_STATIC) ? in.M : mMul(in.M, partTransform(in.anim, P.partId, P.pivot));
-      std::vector<Vec3> V(P.pos.size()); for (size_t i = 0; i < V.size(); i++) { Vec3 q = transformPoint(PM, P.pos[i]) - sm.focus; V[i] = {(dot(q, sm.lx) / sm.ext * .5f + .5f) * sm.n, (dot(q, sm.ly) / sm.ext * .5f + .5f) * sm.n, dot(q, S)}; }
+    for (const Primitive& P : in.model->prims) { if (P.material >= 0 && (in.model->materials[P.material].blend || in.model->materials[P.material].mask)) continue;
+      std::vector<Vec3> skP, skN; const std::vector<Vec3>* pPos = &P.pos; if (P.skinned && in.anim.rig != RIG_STATIC) { skinPrimitive(P, in.anim, skP, skN); pPos = &skP; }
+      Mat4 PM = (in.anim.rig == RIG_STATIC || P.skinned) ? in.M : mMul(in.M, partTransform(in.anim, P.partId, P.pivot));
+      std::vector<Vec3> V(P.pos.size()); for (size_t i = 0; i < V.size(); i++) { Vec3 q = transformPoint(PM, (*pPos)[i]) - sm.focus; V[i] = {(dot(q, sm.lx) / sm.ext * .5f + .5f) * sm.n, (dot(q, sm.ly) / sm.ext * .5f + .5f) * sm.n, dot(q, S)}; }
       for (size_t k = 0; k + 2 < P.idx.size(); k += 3) { const Vec3 &a = V[P.idx[k]], &b = V[P.idx[k + 1]], &c = V[P.idx[k + 2]]; float area = (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y); if (std::fabs(area) < 1e-9f) continue;
         int x0 = std::max(0, int(std::floor(std::min({a.x, b.x, c.x})))), x1 = std::min(sm.n - 1, int(std::ceil(std::max({a.x, b.x, c.x})))), y0 = std::max(0, int(std::floor(std::min({a.y, b.y, c.y})))), y1 = std::min(sm.n - 1, int(std::ceil(std::max({a.y, b.y, c.y}))));
         if (x1 - x0 > 600 || y1 - y0 > 600) continue;

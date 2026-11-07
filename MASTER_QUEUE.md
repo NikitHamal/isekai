@@ -1,5 +1,8 @@
 # MASTER DEVELOPMENT QUEUE — CHRONICLES OF AETHERIA: ISEKAI (REAL BLENDER `bpy` PIPELINE)
 
+### HOTFIX v0.6.0 — Owner overhaul #2: real anime character models (done)
+- [x] **H2 (v0.6.0)**: Owner overhaul #2 — REAL ANIME CHARACTERS. Downloaded free-use VRoid Studio sample avatars (Sakurada Fumiriya, AvatarSample_C, Victoria Rubin, Vivi — see CREDITS.md), studied their skeleton/skin-weight structure and converted them in real headless Blender (`tools/blender_forge/vrm_forge.py`): T-pose->A-pose LBS, bone weights -> the engine's 14 named body parts with top-2 part blend stored in TEXCOORD_1, per-material+part named objects with joint pivots, 1024px PBR materials, alpha-masked hair/lash cards, official bpy glTF export. New `armor_kit.py` fits measurement-driven armour (cuirass, layered pauldrons, bracers, greaves, knee cops, belt, draped cloak), elf/cat ears, circlet, tail, staff, re-imported sword/shield. Engine: CPU part-blend skinning (`skinPrimitive` in `animator.hpp`) for the GL + software paths (no joint cracks), alpha-mask materials, biped tail sway.
+
 ### HOTFIX v0.5.0 — Owner overhaul (done)
 - [x] **H1 — Anatomical Blender characters (`anatomy_core/face/body.py`): Hero, Paladin, Orc, Goblin, Direwolf with sculpted faces, fingered hands, 2-segment limbs; hierarchical animator (waist→torso→shoulder→elbow, hip→knee); NaN/black-box + shadow-swim/z-fight flicker fixes; mesh-driven collision (enterable buildings, standable rocks, jump/mantle, camera collision).**
 
@@ -26,7 +29,7 @@
 ### Tier 2: Expand Valoria Kingdom Architecture, Allies, River Ruins & Mounts (All Built in Blender `bpy`)
 - [x] **Q06 — Valoria Town Plaza in Blender: Blacksmith Forge (`bld_blacksmith_forge_shop`), Magic Tower (`bld_apothecary_magic_tower`) & Tavern Inn (`bld_medieval_tavern_inn`)**
   - Model all 3 medieval buildings in Blender (`>= 9,000` tris each, beveled stonework, arrayed roof tiles, glowing forge furnace, copper astronomical dome, tavern balcony) and place them around the Valoria town plaza.
-- [ ] **Q07 — Isekai Party Allies in Blender: High-Elf Archmage Sylphie (`chr_ally_sylphie_elf_mage`) & Beastkin Rogue Lyra (`chr_ally_lyra_beastkin_rogue`) + Companion Combat AI**
+- [x] **Q07 — Isekai Party Allies in Blender: High-Elf Archmage Sylphie (`chr_ally_sylphie_elf_mage`) & Beastkin Rogue Lyra (`chr_ally_lyra_beastkin_rogue`) + Companion Combat AI** (done in v0.6.0: Sylphie keeps ~7 m and casts arcane frost bolts, Lyra dashes in for twin-dagger strikes, both trail the hero when idle — `GameWorld::alliesUpdate`)
   - Sculpt/model both articulated characters in Blender (`>= 10,000` tris with limb pivots) and spawn them as active AI party members who follow the Hero and fight monsters with ranged arcane bolts and twin-dagger strikes.
 - [ ] **Q08 — River Gorge & Ancient Ruins in Blender: Stone Bridge (`env_ancient_bridge_ruins`), Elven Mana Shrine (`env_mana_shrine_waystone`) & Market Props (`prp_medieval_market_barrels_crates`)**
   - Model all 3 assets in Blender, add a reflective river gorge crossed by the bridge, and restore HP/Mana when near the Mana Shrine.

@@ -36,10 +36,10 @@ enum PartId : int {
 struct Texture { int w = 0, h = 0; std::vector<uint8_t> rgba; bool valid() const { return w > 0; } };
 struct Material {
   std::string name; int base = -1, normal = -1, mr = -1, emissive = -1;
-  float baseFactor[4] = {1, 1, 1, 1}; float emissiveFactor[3] = {0, 0, 0}; bool blend = false;
+  float baseFactor[4] = {1, 1, 1, 1}; float emissiveFactor[3] = {0, 0, 0}; bool blend = false, mask = false; float cutoff = 0.5f;
 };
 struct Primitive {
-  std::vector<Vec3> pos, nrm; std::vector<float> uv; std::vector<float> tan;  // tan: xyzw
+  std::vector<Vec3> pos, nrm; std::vector<float> uv; std::vector<float> uv2; bool skinned = false; std::vector<float> tan;  // uv2 (TEXCOORD_1) = (part0, part1 + blend): CPU part-blend skinning,  // tan: xyzw
   std::vector<uint32_t> idx; int material = -1; std::string node;
   int partId = PART_ROOT; Vec3 pivot{0, 0, 0};
 };

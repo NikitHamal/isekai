@@ -13,9 +13,9 @@ Pipeline: `tools/assets/gen_<slug>.py` -> `assets/models/<category>/<slug>.glb` 
 ## 2. Characters (`assets/models/characters/`)
 - [x] `chr_hero_kaelen_adventurer` (>= 10,000 tris)
 - [ ] `chr_ally_mira_town_healer` (>= 9,000 tris)
-- [ ] `chr_ally_sylphie_elf_mage` (>= 10,000 tris)
+- [x] `chr_ally_sylphie_elf_mage` (>= 10,000 tris)
 - [x] `chr_ally_garrick_royal_paladin` (>= 10,000 tris)
-- [ ] `chr_ally_lyra_beastkin_rogue` (>= 9,500 tris)
+- [x] `chr_ally_lyra_beastkin_rogue` (>= 9,500 tris)
 
 ## 3. Buildings (`assets/models/buildings/`)
 - [x] `bld_valoria_adventurer_guild` (>= 8,500 tris)
@@ -65,3 +65,4 @@ Pipeline: `tools/assets/gen_<slug>.py` -> `assets/models/<category>/<slug>.glb` 
 
 ## v0.5.0 anatomical remaster
 - chr_hero_kaelen_adventurer, chr_ally_garrick_royal_paladin, mon_orc_warlord_berserker, mon_forest_goblin_raider, mon_shadow_direwolf_alpha: rebuilt via `anatomy_*.py` (35k-58k tris, joint-pivoted parts: torso/head/cloak/arm/forearm/leg/shin/weapon_r/tail).
+- v0.6.0: chr_hero_kaelen_adventurer (88k tris), chr_ally_garrick_royal_paladin (107k), chr_ally_sylphie_elf_mage (38k), chr_ally_lyra_beastkin_rogue (61k) are VRoid-based anime rigs converted/customised in Blender (`vrm_forge.py` + `armor_kit.py`), skinned in-engine via TEXCOORD_1 part blending. Sources: see CREDITS.md.

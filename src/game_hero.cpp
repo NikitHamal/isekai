@@ -145,4 +145,26 @@ void GameWorld::enemiesUpdate(float dt) {
     if (speed > 0) e.yaw += wrapPi(std::atan2(mv.x, mv.z) - e.yaw) * (1.f - std::exp(-8.f * dt)); else if (d <= s.range) e.yaw = std::atan2(to.x, to.z);
     moveEntity(e.pos, (mv * speed + e.vel) * dt, std::min(s.radius, 0.6f)); e.vel = e.vel * std::exp(-6.f * dt);
     if (d < s.range && e.atkCd <= 0) { e.atkCd = s.cd; if (invuln <= 0) { hp -= s.dmg; invuln = 0.9f; hurtFlash = 0.4f; camShake = 0.28f; heroVel = to * (7.f / std::max(d, .3f)); burst(hero + Vec3{0, 1.1f, 0}, 25, {.9f, .1f, .12f}, 3.f); } } } }
+// Party AI: Sylphie holds ~7 m and casts arcane frost bolts, Lyra dashes in for twin-dagger strikes; with no enemy near they trail the hero.
+void GameWorld::alliesUpdate(float dt) {
+  for (size_t i = 0; i < allies.size(); i++) {
+    Ally& a = allies[i]; a.cd = std::max(0.f, a.cd - dt); a.atkT = std::max(0.f, a.atkT - dt);
+    Enemy* tgt = nullptr; float bd = 18.f;
+    for (auto& e : enemies) if (e.alive) { float d = vlen(e.pos - a.pos); if (d < bd && vlen(e.pos - hero) < 24.f) { bd = d; tgt = &e; } }
+    Vec3 goal; float stop = 0.5f;
+    if (tgt) {
+      Vec3 d = tgt->pos - a.pos; d.y = 0; float L = std::max(vlen(d), .01f); Vec3 dn = d * (1.f / L);
+      goal = a.kind == 0 ? tgt->pos - dn * 7.f : tgt->pos - dn * 1.25f; a.yaw = std::atan2(dn.x, dn.z);
+      if (a.kind == 0 && bd < 13.f && a.cd <= 0.f) { Vec3 o = a.pos + Vec3{0, 1.45f, 0}, t = tgt->pos + Vec3{0, statsFor(tgt->kind).height * .5f, 0}; bolts.push_back({o, normalize(t - o) * 28.f, 1.6f, 1}); a.cd = 1.6f; a.atkT = .4f; }
+      else if (a.kind == 1 && bd < 2.3f && a.cd <= 0.f) { damage(*tgt, 1.0f, a.pos, 3.5f); a.cd = .75f; a.atkT = .45f; }
+    } else {
+      Vec3 f = {std::sin(heroYaw), 0, std::cos(heroYaw)}, r = {std::cos(heroYaw), 0, -std::sin(heroYaw)}; float side = a.kind == 0 ? -1.f : 1.f;
+      goal = hero + f * 2.6f + r * (side * 2.2f); stop = 0.9f;
+    }
+    Vec3 to = goal - a.pos; to.y = 0; float dist = std::max(vlen(to), .001f); float want = dist > stop ? std::min(6.4f, 1.6f + dist * 1.5f) : 0.f;
+    a.speed += (want - a.speed) * std::min(1.f, dt * 8.f);
+    if (want > 0.f) { Vec3 dn = to * (1.f / dist); Vec3 p = a.pos; moveEntity(p, dn * (a.speed * dt), .4f); a.pos = p; if (!tgt) a.yaw = std::atan2(dn.x, dn.z); }
+    a.pos.y = terrainHeight(a.pos.x, a.pos.z); a.walkPhase += dt * a.speed * 1.9f;
+  }
+}
 }  // namespace isekai

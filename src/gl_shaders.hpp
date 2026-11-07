@@ -13,7 +13,7 @@ void main(){ vec4 w = uM*vec4(aP,1.0);
   vWP=w.xyz; vN=mat3(uM)*aN; vT=vec4(mat3(uM)*aT.xyz,aT.w); vUV=aUV; gl_Position=uVP*w; })";
 static const char* kPbrFS = R"(#version 330 core
 in vec3 vWP; in vec3 vN; in vec2 vUV; in vec4 vT; out vec4 oC;
-uniform sampler2D uAlb; uniform sampler2D uNrm; uniform sampler2D uMR; uniform sampler2D uEm; uniform sampler2D uShadow; uniform vec4 uHas; uniform vec4 uBase; uniform vec3 uEmF;
+uniform sampler2D uAlb; uniform sampler2D uNrm; uniform sampler2D uMR; uniform sampler2D uEm; uniform sampler2D uShadow; uniform vec4 uHas; uniform float uMask; uniform vec4 uBase; uniform vec3 uEmF;
 uniform vec3 uTint; uniform float uEmBoost; uniform vec3 uCam; uniform float uTime; uniform int uGround; uniform float uBaseY; uniform mat4 uLVP; uniform vec3 uSun;
 uniform vec3 uLP[8]; uniform vec3 uLC[8]; uniform float uLR[8]; uniform int uNL; uniform vec3 uHoriz; uniform vec3 uZenith;
 const float PI=3.14159265;
@@ -53,6 +53,7 @@ void main(){
     vec3 dpx=dFdx(vWP), dpy=dFdy(vWP); float dhx=dFdx(h), dhy=dFdy(h); vec3 r1=cross(dpy,N), r2=cross(N,dpx); float det=dot(dpx,r1);
     vec3 grad=sign(det)*(dhx*r1+dhy*r2); float bf=1.0-smoothstep(6.0,26.0,length(uCam-vWP)); N=normalize(abs(det)*N-grad*0.9*bf+N*1e-6); }
   else {
+    if(uMask>0.5&&uHas.x>0.5&&texture(uAlb,vUV).a<0.5) discard;
     if(uHas.x>0.5) alb=pow(texture(uAlb,vUV).rgb,vec3(2.2))*uBase.rgb;
     if(uHas.z>0.5){ vec3 mr=texture(uMR,vUV).rgb; rough=clamp(mr.g,0.05,1.0); met=mr.b; }
     if(dot(N,V)<0.0) N=-N;

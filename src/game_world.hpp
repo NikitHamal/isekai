@@ -12,6 +12,7 @@ namespace isekai {
 enum EnemyKind { EK_GOBLIN = 0, EK_ORC = 1, EK_WOLF = 2 };
 struct Particle { Vec3 p, v; float life, maxLife, size; Vec3 col; };
 struct Enemy { int kind = EK_GOBLIN; Vec3 pos, vel, home; float yaw = 0, hp = 3, maxHp = 3, atkCd = 0, flash = 0, patrolT = 0, hitId = -1, deadT = 0, walkPhase = 0, moveSpeed = 0, freezeT = 0; bool alive = true; };
+struct Ally { int kind = 0; Vec3 pos{}; float yaw = 0, walkPhase = 0, speed = 0, atkT = 0, cd = 0; };   // kind 0 = Sylphie (arcane bolts), 1 = Lyra (twin daggers)
 struct Bolt { Vec3 pos, vel; float life = 2.f; int kind = 0; };
 struct Flash { Vec3 pos; float t = 0; int kind = 0; };
 struct SlashPt { Vec3 base, tip; float t = 0.35f; };
@@ -35,7 +36,7 @@ class GameWorld {
   void spawn(int kind, Vec3 p);
   void heroUpdate(const Input& in, float dt);
   void cameraUpdate(const Input& in, float dt);
-  void enemiesUpdate(float dt);
+  void enemiesUpdate(float dt); void alliesUpdate(float dt);
   void boltsUpdate(float dt);
   void startSlash(); void castSpell();
   void buildCollision(); bool tryMove(float nx, float nz); void moveEntity(Vec3& pos, Vec3 delta, float r);
@@ -48,7 +49,7 @@ class GameWorld {
   int activeSpell = 0; float hitStop = 0, camShake = 0;
   int combo = 0; float slashT = 0, slashDur = 0.4f, comboWindow = 0, slashId = 0; bool queuedSlash = false;
   float camYaw = kPi, camPitch = 0.30f, camDist = 5.6f, time = 0, runPhase = 0; Vec3 camEye{0, 4, 19}; bool camInit = false, camOverride = false; Vec3 ovEye{}, ovTgt{};
-  std::vector<Enemy> enemies; std::vector<Bolt> bolts; std::vector<Flash> flashes; std::vector<Particle> parts;
+  std::vector<Ally> allies; std::vector<Enemy> enemies; std::vector<Bolt> bolts; std::vector<Flash> flashes; std::vector<Particle> parts;
   std::vector<std::pair<Vec3, float>> trail; std::vector<SlashPt> slashRibbon;
 };
 Model makeBoxModel(Vec3 half, Vec3 center, Vec3 rgb);

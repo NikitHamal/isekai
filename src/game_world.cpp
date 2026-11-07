@@ -4,7 +4,7 @@
 #include "terrain.hpp"
 namespace isekai {
 static const struct { const char* key; const char* path; } kAssets[] = {
-  {"hero", "characters/chr_hero_kaelen_adventurer"}, {"paladin", "characters/chr_ally_garrick_royal_paladin"},
+  {"hero", "characters/chr_hero_kaelen_adventurer"}, {"paladin", "characters/chr_ally_garrick_royal_paladin"}, {"sylphie", "characters/chr_ally_sylphie_elf_mage"}, {"lyra", "characters/chr_ally_lyra_beastkin_rogue"},
   {"guild", "buildings/bld_valoria_adventurer_guild"}, {"keep", "buildings/bld_royal_citadel_keep"}, {"forge", "buildings/bld_blacksmith_forge_shop"}, {"tower", "buildings/bld_apothecary_magic_tower"}, {"tavern", "buildings/bld_medieval_tavern_inn"}, {"wagon", "vehicles/veh_merchant_covered_wagon"},
   {"orc", "monsters/mon_orc_warlord_berserker"}, {"wolf", "monsters/mon_shadow_direwolf_alpha"}, {"goblin", "monsters/mon_forest_goblin_raider"},
   {"slime", "monsters/mon_emerald_mana_slime_king"}, {"cliff", "environment/env_mossy_forest_cliff_modular"},
@@ -15,6 +15,7 @@ GameWorld::GameWorld(const std::string& root) {
   loadAll(root); hero = {roadCenterX(12.f), gy(roadCenterX(12.f), 12.f), 12.f};
   for (int i = 0; i < 4; i++) { float z = -14.f - i * 7.f; spawn(EK_GOBLIN, {roadCenterX(z) + (i % 2 ? 5.f : -5.f), 0, z}); }
   spawn(EK_ORC, {roadCenterX(-30.f) - 7.f, 0, -30.f}); spawn(EK_ORC, {roadCenterX(-46.f) + 6.f, 0, -46.f});
+  allies.push_back({0, hero + Vec3{-2.4f, 0, 2.2f}}); allies.push_back({1, hero + Vec3{2.4f, 0, 2.6f}});
   spawn(EK_WOLF, {roadCenterX(-22.f) + 9.f, 0, -22.f}); spawn(EK_WOLF, {roadCenterX(-38.f) - 10.f, 0, -38.f}); spawn(EK_WOLF, {roadCenterX(-54.f) + 3.f, 0, -54.f}); }
 void GameWorld::loadAll(const std::string& root) {
   namespace fs = std::filesystem; found = fs::exists(root + "/assets/models");
@@ -53,7 +54,7 @@ void GameWorld::update(const Input& in, float dt, float) {
   for (auto& p : parts) { p.life -= dt; p.v.y -= 5.f * dt; p.p = p.p + p.v * dt; } parts.erase(std::remove_if(parts.begin(), parts.end(), [](const Particle& p) { return p.life <= 0; }), parts.end());
   for (auto& f : flashes) f.t -= dt; flashes.erase(std::remove_if(flashes.begin(), flashes.end(), [](const Flash& f) { return f.t <= 0; }), flashes.end());
   if (hitStop > 0.f) { hitStop = std::max(0.f, hitStop - dt); return; }
-  heroUpdate(in, dt); enemiesUpdate(dt); boltsUpdate(dt);
+  heroUpdate(in, dt); enemiesUpdate(dt); alliesUpdate(dt); boltsUpdate(dt);
   if (slashT <= 0.f) { trail.clear(); slashRibbon.clear(); }
   else {
     for (auto& t : trail) t.second -= dt;

@@ -42,11 +42,15 @@ Scene GameWorld::buildScene() const {
   }
   // Hero with hierarchical skeletal animation
   float roll = 0.f, bob = 0.f; Vec3 hp3 = hero + Vec3{0, yOff + bob, 0};
-  Mat4 hm = mMul(mTrans(hp3), mMul(mRotY(heroYaw), mScale(1.12f))); Vec3 ht{1.f, 1 - hurtFlash, 1 - hurtFlash};
+  Mat4 hm = mMul(mTrans(hp3), mMul(mRotY(heroYaw), mScale(1.04f))); Vec3 ht{1.f, 1 - hurtFlash, 1 - hurtFlash};
   AnimState ha; ha.rig = RIG_HERO; ha.time = time; ha.walkPhase = runPhase; ha.speed = vlen({heroVel.x, 0.f, heroVel.z});
   ha.slashProgress = slashProgress(); ha.combo = combo; ha.slashing = slashT > 0.f;
   ha.castWeight = std::clamp(castFlash / 0.35f, 0.f, 1.f); ha.rollProgress = rollT > 0.f ? 1.f - rollT / 0.5f : 0.f; ha.airborne = !onGround;
   add("hero", hm, 1.f, ht, false, ha);
+  for (const Ally& al : allies) {   // party members: skinned anime rigs with the shared biped animator
+    const char* ak = al.kind ? "lyra" : "sylphie"; if (!M(ak)) continue; AnimState an; an.rig = RIG_BIPED; an.time = time; an.walkPhase = al.walkPhase; an.speed = al.speed;
+    if (al.kind == 0) an.castWeight = std::clamp(al.atkT / 0.35f, 0.f, 1.f); else an.attackProgress = al.atkT > 0.f ? 1.f - al.atkT / 0.45f : 0.f;
+    add(ak, fit(M(ak), al.kind ? 1.62f : 1.78f, al.pos, al.yaw), 1.f, {1, 1, 1}, false, an); }
   // Rotating 3D Runic Circle at the caster's feet while casting
   if (castFlash > 0.f && M("rune")) {
     Vec3 sc = spellColor(activeSpell);
@@ -123,5 +127,7 @@ void GameWorld::stageShowcase() {
   bolts.clear(); bolts.push_back({{rx + 0.7f, 1.35f, 8.8f}, {2.2f, -.5f, -26.f}, 1.f, 0});
   flashes.clear(); flashes.push_back({enemies[2].pos, 0.52f, 2});
   for (int i = 0; i < 8; i++) { Vec3 p = Vec3{rx + 0.7f, 1.35f, 8.8f} + Vec3{2.2f, -.5f, -26.f} * (i * .012f); parts.push_back({p, {0, .3f, 0}, .5f, 1.f, .1f, {1.f, .45f, .12f}}); }
+  if (allies.size() >= 2) { allies[0].pos = {rx - 2.5f, terrainHeight(rx - 2.5f, 10.2f), 10.2f}; allies[0].yaw = kPi - 0.2f; allies[0].atkT = 0.3f; allies[0].speed = 0.f;
+    allies[1].pos = {rx + 2.1f, terrainHeight(rx + 2.1f, 9.4f), 9.4f}; allies[1].yaw = kPi + 0.15f; allies[1].atkT = 0.2f; allies[1].speed = 4.f; allies[1].walkPhase = 1.1f; }
   camOverride = true; ovEye = {rx + 4.2f, 2.3f, 19.5f}; ovTgt = {rx - 1.5f, 2.3f, 4.f}; }
 }  // namespace isekai

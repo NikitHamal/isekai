@@ -96,11 +96,24 @@ inline Mat4 partTransform(const AnimState& a, int partId, Vec3 pivot) {
     case PART_FOREARM_R: case PART_WEAPON_R:
       if (a.pvHas && a.pvHas[PART_FOREARM_R]) return armChain(PART_ARM_R, PART_FOREARM_R, armRP, armRY, armRZ, elbR, true);
       return armChain(PART_ARM_R, PART_ARM_R, armRP, armRY, armRZ, 0.f, false);
+    case PART_JAW_OR_TAIL: return mMul(G, mMul(Tt, aroundPivot(pivot, mMul(mRotY(std::sin(a.time * 3.1f) * (0.22f + 0.2f * sp) - torsoYaw * 0.8f), mRotX(0.10f + 0.30f * sp + 0.06f * std::sin(a.time * 2.2f))))));
     case PART_LEG_L: return legChain(PART_LEG_L, PART_SHIN_L, hipL, kneeL, false);
     case PART_SHIN_L: return legChain(PART_LEG_L, PART_SHIN_L, hipL, kneeL, true);
     case PART_LEG_R: return legChain(PART_LEG_R, PART_SHIN_R, hipR, kneeR, false);
     case PART_SHIN_R: return legChain(PART_LEG_R, PART_SHIN_R, hipR, kneeR, true);
     default: return G;
+  }
+}
+// CPU part-blend skinning: each vertex stores (part0, part1 + blend) in TEXCOORD_1; position = lerp(M[part0] p, M[part1] p, blend) with the hierarchical part poses above.
+inline void skinPrimitive(const Primitive& P, const AnimState& a, std::vector<Vec3>& pos, std::vector<Vec3>& nrm) {
+  Mat4 pm[PART_COUNT];
+  for (int k = 0; k < PART_COUNT; k++) pm[k] = partTransform(a, k, (a.pv && a.pvHas && a.pvHas[k]) ? a.pv[k] : P.pivot);
+  size_t n = P.pos.size(); pos.resize(n); nrm.resize(n);
+  for (size_t i = 0; i < n; i++) {
+    int j0 = std::clamp(int(P.uv2[i * 2] + 0.5f), 0, PART_COUNT - 1); float v = P.uv2[i * 2 + 1]; int j1 = std::clamp(int(std::floor(v + 1e-3f)), 0, PART_COUNT - 1); float wb = std::clamp(v - float(j1), 0.f, 1.f);
+    if (wb < 1e-3f || j0 == j1) { pos[i] = transformPoint(pm[j0], P.pos[i]); nrm[i] = transformDir(pm[j0], P.nrm[i]); continue; }
+    pos[i] = transformPoint(pm[j0], P.pos[i]) * (1.f - wb) + transformPoint(pm[j1], P.pos[i]) * wb;
+    nrm[i] = normalize(transformDir(pm[j0], P.nrm[i]) * (1.f - wb) + transformDir(pm[j1], P.nrm[i]) * wb);
   }
 }
 }  // namespace isekai

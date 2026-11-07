@@ -46,12 +46,12 @@ def render(prims, g, blob, mode, yaw, pitch, S=512):
             pb = m["pbrMetallicRoughness"]; tex[p["mat"]] = (image(g, blob, pb["baseColorTexture"]["index"]), image(g, blob, m["normalTexture"]["index"]), image(g, blob, m["emissiveTexture"]["index"]) if "emissiveTexture" in m else None)
         A, NM, EM = tex[p["mat"]]; F = p["F"]; z = P[F, 2].mean(1); uv = p["UV"][F].mean(1)
         fn = N[F].mean(1); fn /= np.linalg.norm(fn, axis=1, keepdims=True) + 1e-9; h, w = A.shape[:2]; ix = (uv[:, 0] % 1 * (w-1)).astype(int); iy = (uv[:, 1] % 1 * (h-1)).astype(int)
-        alb = A[iy, ix]; nm = NM[iy, ix] * 2 - 1
+        smp = lambda T_: T_[(uv[:, 1] % 1 * (T_.shape[0] - 1)).astype(int), (uv[:, 0] % 1 * (T_.shape[1] - 1)).astype(int)]; alb = A[iy, ix]; nm = smp(NM) * 2 - 1
         if p["T"] is not None and mode != "wire":
             T = p["T"][F][:, :, :3].mean(1) @ R.T; T /= np.linalg.norm(T, axis=1, keepdims=True) + 1e-9; B = np.cross(fn, T); fn2 = T * nm[:, :1] + B * nm[:, 1:2] + fn * nm[:, 2:3]; fn2 /= np.linalg.norm(fn2, axis=1, keepdims=True) + 1e-9
         else: fn2 = fn
         dif = np.clip(fn2 @ L, 0, 1)[:, None]; col = alb * (.25 + .85 * dif)
-        if EM is not None: col = col + EM[iy, ix] * .8
+        if EM is not None: col = col + smp(EM) * .8
         if mode == "normal": col = fn2 * .5 + .5
         col = (np.clip(col, 0, 1) * 255).astype(np.uint8)
         for k in np.where(fn[:, 2] > -0.0 if mode != "wire" else fn[:, 2] > -2)[0]: polys.append((z[k], P[F[k], :2], col[k]))

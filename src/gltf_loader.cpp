@@ -60,7 +60,7 @@ static void rigCharacterParts(Model& out) {
     else if (isWpnNode(n)) fixed = PART_WEAPON_R;
     else if (hasSub(n, "buckler") || hasSub(n, "shield") || hasSub(n, "glyph")) fixed = PART_ARM_L;
     else if (hasSub(n, "hair") || hasSub(n, "eyes") || hasSub(n, "helm") || hasSub(n, "visor") || hasSub(n, "crest") || hasSub(n, "plume") || hasSub(n, "horns") || hasSub(n, "tusks") || hasSub(n, "ears")) fixed = PART_HEAD;
-    if (fixed >= 0) { P.partId = fixed; if (dot(P.pivot, P.pivot) < 1e-4f) P.pivot = pivotFor(fixed); rigged.push_back(std::move(P)); continue; }
+    if (fixed >= 0) { P.skinned = P.uv2.size() == P.pos.size() * 2 && !P.pos.empty(); P.partId = fixed; if (dot(P.pivot, P.pivot) < 1e-4f) P.pivot = pivotFor(fixed); rigged.push_back(std::move(P)); continue; }
     std::vector<uint32_t> buckets[PART_COUNT];
     for (size_t k = 0; k + 2 < P.idx.size(); k += 3) {
       uint32_t ia = P.idx[k], ib = P.idx[k + 1], ic = P.idx[k + 2];
@@ -122,7 +122,7 @@ bool loadGlb(const std::string& path, Model& out, std::string& err) {
     }
     mt.normal = texIndex(d, m.normal_texture); mt.emissive = texIndex(d, m.emissive_texture);
     for (int k = 0; k < 3; k++) mt.emissiveFactor[k] = m.emissive_factor[k];
-    mt.blend = m.alpha_mode == cgltf_alpha_mode_blend; out.materials.push_back(mt);
+    mt.blend = m.alpha_mode == cgltf_alpha_mode_blend; mt.mask = m.alpha_mode == cgltf_alpha_mode_mask; mt.cutoff = m.alpha_cutoff; out.materials.push_back(mt);
   }
   for (size_t ni = 0; ni < d->nodes_count; ni++) {
     const cgltf_node& n = d->nodes[ni]; if (!n.mesh) continue;
@@ -136,6 +136,7 @@ bool loadGlb(const std::string& path, Model& out, std::string& err) {
         if (a.type == cgltf_attribute_type_position) for (size_t v = 0; v < cnt; v++) P.pos.push_back(transformPoint(W, {buf[v*3], buf[v*3+1], buf[v*3+2]}));
         else if (a.type == cgltf_attribute_type_normal) for (size_t v = 0; v < cnt; v++) P.nrm.push_back(normalize(transformDir(W, {buf[v*3], buf[v*3+1], buf[v*3+2]})));
         else if (a.type == cgltf_attribute_type_texcoord && a.index == 0) P.uv = buf;
+        else if (a.type == cgltf_attribute_type_texcoord && a.index == 1) P.uv2 = buf;
         else if (a.type == cgltf_attribute_type_tangent) { P.tan = buf; for (size_t v = 0; v < cnt; v++) { Vec3 t = normalize(transformDir(W, {buf[v*4], buf[v*4+1], buf[v*4+2]})); P.tan[v*4] = t.x; P.tan[v*4+1] = t.y; P.tan[v*4+2] = t.z; } }
       }
       P.idx.resize(pr.indices->count); for (size_t k = 0; k < P.idx.size(); k++) P.idx[k] = uint32_t(cgltf_accessor_read_index(pr.indices, k));
