@@ -29,7 +29,7 @@ def flatten(g, blob):
             for p in g["meshes"][n["mesh"]]["primitives"]:
                 at = p["attributes"]; V = accessor(g, blob, at["POSITION"]).astype(float); N = accessor(g, blob, at["NORMAL"]).astype(float)
                 out.append(dict(V=V @ W[:3, :3].T + W[:3, 3], N=N @ np.linalg.inv(W[:3, :3]), UV=accessor(g, blob, at["TEXCOORD_0"]).astype(float),
-                                F=accessor(g, blob, p["indices"]).reshape(-1, 3).astype(int), mat=p["material"], T=accessor(g, blob, at["TANGENT"]).astype(float) if "TANGENT" in at else None))
+                                F=accessor(g, blob, p["indices"]).reshape(-1, 3).astype(int), mat=p["material"], T=accessor(g, blob, at["TANGENT"]).astype(float) if "TANGENT" in at else None, name=n.get("name", "")))
         for c in n.get("children", []): walk(c, W)
     for r in g["scenes"][0]["nodes"]: walk(r, np.eye(4))
     return out

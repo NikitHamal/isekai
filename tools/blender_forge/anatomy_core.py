@@ -14,6 +14,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 _TMP = tempfile.mkdtemp(prefix="isekai_anat_")
 _MATS = {}
 OBJS = []
+IMG_FMT = 'AUTO'
+EXPORT_TANGENTS = True
 
 def reset():
     _MATS.clear(); OBJS.clear()
@@ -226,7 +228,7 @@ def export(path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     bpy.ops.object.select_all(action='DESELECT')
     bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', export_yup=True, export_apply=True, export_normals=True,
-                              export_texcoords=True, export_tangents=True, export_materials='EXPORT', export_cameras=False, export_lights=False)
+                              export_texcoords=True, export_tangents=EXPORT_TANGENTS, export_image_format=IMG_FMT, export_jpeg_quality=90, export_materials='EXPORT', export_cameras=False, export_lights=False)
     dg = bpy.context.evaluated_depsgraph_get(); t = 0
     for o in OBJS:
         e = o.evaluated_get(dg); me = e.to_mesh(); t += sum(len(p.vertices) - 2 for p in me.polygons); e.to_mesh_clear()

@@ -141,6 +141,20 @@ bool loadGlb(const std::string& path, Model& out, std::string& err) {
       }
       P.idx.resize(pr.indices->count); for (size_t k = 0; k < P.idx.size(); k++) P.idx[k] = uint32_t(cgltf_accessor_read_index(pr.indices, k));
       if (P.pos.empty() || P.nrm.size() != P.pos.size() || P.uv.size() != P.pos.size() * 2) { err = "primitive missing POSITION/NORMAL/TEXCOORD_0 in node " + P.node; cgltf_free(d); return false; }
+      if (P.tan.empty()) {   // models exported without TANGENT: derive per-vertex tangents from UV derivatives (glTF V is flipped vs Blender's bitangent convention)
+        size_t nv = P.pos.size(); std::vector<Vec3> ta(nv, Vec3{0.f, 0.f, 0.f}), ba(nv, Vec3{0.f, 0.f, 0.f});
+        for (size_t k = 0; k + 2 < P.idx.size(); k += 3) {
+          uint32_t i0 = P.idx[k], i1 = P.idx[k + 1], i2 = P.idx[k + 2]; Vec3 e1 = P.pos[i1] - P.pos[i0], e2 = P.pos[i2] - P.pos[i0];
+          float du1 = P.uv[i1 * 2] - P.uv[i0 * 2], dv1 = -(P.uv[i1 * 2 + 1] - P.uv[i0 * 2 + 1]), du2 = P.uv[i2 * 2] - P.uv[i0 * 2], dv2 = -(P.uv[i2 * 2 + 1] - P.uv[i0 * 2 + 1]);
+          float r = du1 * dv2 - du2 * dv1; if (std::fabs(r) < 1e-14f) continue; r = 1.f / r; Vec3 t = (e1 * dv2 - e2 * dv1) * r, b = (e2 * du1 - e1 * du2) * r;
+          ta[i0] = ta[i0] + t; ta[i1] = ta[i1] + t; ta[i2] = ta[i2] + t; ba[i0] = ba[i0] + b; ba[i1] = ba[i1] + b; ba[i2] = ba[i2] + b;
+        }
+        P.tan.resize(nv * 4);
+        for (size_t v = 0; v < nv; v++) {
+          Vec3 N = P.nrm[v], t = ta[v] - N * dot(N, ta[v]); if (dot(t, t) < 1e-16f) t = Vec3{1.f, 0.f, 0.f} - N * N.x; t = normalize(t);
+          P.tan[v * 4] = t.x; P.tan[v * 4 + 1] = t.y; P.tan[v * 4 + 2] = t.z; P.tan[v * 4 + 3] = dot(cross(N, t), ba[v]) < 0.f ? -1.f : 1.f;
+        }
+      }
       for (auto& v : P.pos) { out.bmin = {std::fmin(out.bmin.x, v.x), std::fmin(out.bmin.y, v.y), std::fmin(out.bmin.z, v.z)}; out.bmax = {std::fmax(out.bmax.x, v.x), std::fmax(out.bmax.y, v.y), std::fmax(out.bmax.z, v.z)}; }
       out.prims.push_back(std::move(P));
     }

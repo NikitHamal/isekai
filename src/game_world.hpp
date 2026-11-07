@@ -23,6 +23,7 @@ class GameWorld {
   int modelCount() const { return loaded; }
   void update(const Input& in, float dt, float aspect);
   Scene buildScene() const;
+  void stageBestiary();     // close-range monster line-up frame
   void stageShowcase();     // staged hero + combat frame for headless verification
   Vec3 heroPos() const { return hero; }
   void debugPlace(Vec3 p, float camYawIn) { hero = p; heroVel = {}; vy = 0; onGround = true; camYaw = camYawIn; camInit = false; }

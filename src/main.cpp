@@ -44,6 +44,7 @@ static int verifyHeadless(const std::string& root) {
   fs::create_directories(root + "/docs/previews");
   bool png = writePng(root + "/docs/previews/asset_contact_sheet.png", fb);
   { GameWorld w(root); w.stageShowcase(); Framebuffer sf(1600, 900); renderSceneSoft(sf, w.buildScene()); png &= writePng(root + "/docs/previews/engine_headless_frame.png", sf); std::printf("scene: %d of 14 catalog models loaded into the playable world\n", w.modelCount()); }
+  { GameWorld w(root); w.stageBestiary(); Framebuffer sf(1600, 900); renderSceneSoft(sf, w.buildScene()); png &= writePng(root + "/docs/previews/engine_bestiary_frame.png", sf); }
   std::printf("headless: %d model(s), %zu triangles, frame %s, %d failure(s)\n", n, totalTris, png ? "written" : "WRITE-FAILED", failed);
   return (failed == 0 && png) ? 0 : 1;
 }

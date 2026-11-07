@@ -66,3 +66,10 @@ Pipeline: `tools/assets/gen_<slug>.py` -> `assets/models/<category>/<slug>.glb` 
 ## v0.5.0 anatomical remaster
 - chr_hero_kaelen_adventurer, chr_ally_garrick_royal_paladin, mon_orc_warlord_berserker, mon_forest_goblin_raider, mon_shadow_direwolf_alpha: rebuilt via `anatomy_*.py` (35k-58k tris, joint-pivoted parts: torso/head/cloak/arm/forearm/leg/shin/weapon_r/tail).
 - v0.6.0: chr_hero_kaelen_adventurer (88k tris), chr_ally_garrick_royal_paladin (107k), chr_ally_sylphie_elf_mage (38k), chr_ally_lyra_beastkin_rogue (61k) are VRoid-based anime rigs converted/customised in Blender (`vrm_forge.py` + `armor_kit.py`), skinned in-engine via TEXCOORD_1 part blending. Sources: see CREDITS.md.
+
+## v0.7.0 monster remaster (SDF + Blender pipeline)
+| Asset | Tris | Notes |
+|---|---|---|
+| mon_orc_warlord_berserker | ~94k | sculpted muscular orc, tusks, mohawk, hide kit, rusty spiked pauldrons, bracers, cleaver |
+| mon_forest_goblin_raider | ~60k | lanky goblin, big hooked nose, glowing slit eyes, rusty cap, ragged tunic, jagged blade |
+| mon_shadow_direwolf_alpha | ~81k | digitigrade quadruped, 6.4k fur cards (mane/ruff/tail), glowing amber eyes, claws & fangs |

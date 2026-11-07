@@ -3,7 +3,7 @@
 #include "game_world.hpp"
 #include "kingdom.hpp"
 namespace isekai {
-static float enemyHeight(int k) { return k == EK_ORC ? 2.45f : k == EK_WOLF ? 1.0f : 1.22f; }
+static float enemyHeight(int k) { return k == EK_ORC ? 2.45f : k == EK_WOLF ? 1.15f : 1.22f; }
 static Vec3 spellColor(int k) { return k == 1 ? Vec3{.28f, .88f, 1.f} : k == 2 ? Vec3{.88f, .48f, 1.f} : Vec3{1.f, .42f, .14f}; }
 Scene GameWorld::buildScene() const {
   Scene s; s.time = time; s.heroYaw = heroYaw; s.camYaw = camYaw; s.hp = std::clamp(hp / 100.f, 0.f, 1.f); s.mana = std::clamp(mana / 100.f, 0.f, 1.f);
@@ -130,4 +130,11 @@ void GameWorld::stageShowcase() {
   if (allies.size() >= 2) { allies[0].pos = {rx - 2.5f, terrainHeight(rx - 2.5f, 10.2f), 10.2f}; allies[0].yaw = kPi - 0.2f; allies[0].atkT = 0.3f; allies[0].speed = 0.f;
     allies[1].pos = {rx + 2.1f, terrainHeight(rx + 2.1f, 9.4f), 9.4f}; allies[1].yaw = kPi + 0.15f; allies[1].atkT = 0.2f; allies[1].speed = 4.f; allies[1].walkPhase = 1.1f; }
   camOverride = true; ovEye = {rx + 4.2f, 2.3f, 19.5f}; ovTgt = {rx - 1.5f, 2.3f, 4.f}; }
+void GameWorld::stageBestiary() {   // close-range monster line-up for headless verification (orc / goblin / direwolf in the real renderer)
+  stageShowcase(); float rx = roadCenterX(12.f); bolts.clear(); flashes.clear(); parts.clear();
+  Vec3 at[3] = {{rx - 2.0f, 0, 5.2f}, {rx - 0.1f, 0, 6.4f}, {rx + 2.2f, 0, 4.2f}};
+  for (int i = 0; i < 3; i++) { enemies[i].pos = {at[i].x, terrainHeight(at[i].x, at[i].z), at[i].z}; enemies[i].freezeT = 0.f; enemies[i].vel = {}; }
+  enemies[0].yaw = 0.55f; enemies[0].walkPhase = 0.7f; enemies[0].moveSpeed = 6.2f; enemies[1].yaw = -0.35f; enemies[1].walkPhase = 1.9f; enemies[1].moveSpeed = 4.0f; enemies[2].yaw = -0.2f; enemies[2].walkPhase = 0.6f; enemies[2].moveSpeed = 2.0f;
+  camOverride = true; ovEye = {rx + 0.3f, 1.9f, 11.5f}; ovTgt = {rx + 0.1f, 1.25f, 4.5f};
+}
 }  // namespace isekai

@@ -35,15 +35,30 @@ inline Mat4 partTransform(const AnimState& a, int partId, Vec3 pivot) {
   Vec3 waist = jointOf(a, PART_TORSO, pivot);
   Mat4 G = mIdent();   // whole-body transform (dodge roll tumble)
   if (a.rollProgress > 0.f) { float k = std::clamp(a.rollProgress, 0.f, 1.f); Vec3 c = waist + Vec3{0.f, 0.05f, 0.f}; G = aroundPivot(c, mRotX(k * 2.f * kPi), {0.f, -0.18f * std::sin(k * kPi), 0.f}); }
-  if (a.rig == RIG_QUADRUPED) {
-    float gallop = std::sin(a.walkPhase) * 0.62f * sp, spinePitch = std::cos(a.walkPhase) * 0.08f * sp + 0.02f * breathe, bite = std::sin(a.attackProgress * kPi);
-    Mat4 L = mIdent();
-    if (partId == PART_TORSO) L = aroundPivot(pivot, mRotX(spinePitch));
-    else if (partId == PART_HEAD) L = aroundPivot(pivot, mRotX(spinePitch - 0.35f * bite + 0.04f * breathe), {0.f, 0.05f * bite, 0.14f * bite});
-    else if (partId == PART_LEG_L) L = aroundPivot(pivot, mRotX(gallop - 0.3f * bite));
-    else if (partId == PART_LEG_R) L = aroundPivot(pivot, mRotX(-gallop + 0.2f * bite));
-    else if (partId == PART_JAW_OR_TAIL) L = aroundPivot(pivot, mMul(mRotY(std::sin(a.time * 4.2f) * 0.28f), mRotX(0.18f * std::cos(a.time * 3.1f) - 0.2f * sp)));
-    return mMul(G, L);
+  if (a.rig == RIG_QUADRUPED) {   // 4-legged trot/gallop: diagonal pairs (front-left + hind-right), elbow/hock flexion, spine undulation, lunging bite, tail wag
+    float ph = a.walkPhase, bite = std::sin(a.attackProgress * kPi);
+    float bobQ = std::fabs(std::cos(ph)) * 0.035f * sp + 0.004f * breathe, spinePitch = std::cos(ph * 2.f) * 0.05f * sp + 0.012f * breathe - 0.10f * bite;
+    Vec3 waistQ = jointOf(a, PART_TORSO, pivot); Mat4 Tq = mMul(mTrans({0.f, bobQ, 0.f}), aroundPivot(waistQ, mRotX(spinePitch)));
+    auto legQ = [&](int top, int low, float psi, bool lower, float amp, float extra) {
+      float swing = std::sin(psi) * amp * sp + extra, bend = std::max(0.f, -std::cos(psi)) * 1.05f * sp;
+      Mat4 M = mMul(Tq, aroundPivot(jointOf(a, top, pivot), mRotX(swing)));
+      if (lower) M = mMul(M, aroundPivot(jointOf(a, low, pivot), mRotX(bend)));
+      return mMul(G, M); };
+    const float kPi_ = kPi;
+    switch (partId) {
+      case PART_TORSO: return mMul(G, Tq);
+      case PART_HEAD: return mMul(G, mMul(Tq, aroundPivot(pivot, mMul(mRotY(std::sin(ph) * 0.08f * sp), mRotX(-spinePitch * 0.6f - 0.38f * bite + 0.03f * breathe)), {0.f, 0.05f * bite, 0.16f * bite})));
+      case PART_ARM_L: return legQ(PART_ARM_L, PART_FOREARM_L, ph, false, 0.55f, -0.35f * bite);
+      case PART_FOREARM_L: return legQ(PART_ARM_L, PART_FOREARM_L, ph, true, 0.55f, -0.35f * bite);
+      case PART_ARM_R: return legQ(PART_ARM_R, PART_FOREARM_R, ph + kPi_, false, 0.55f, -0.35f * bite);
+      case PART_FOREARM_R: return legQ(PART_ARM_R, PART_FOREARM_R, ph + kPi_, true, 0.55f, -0.35f * bite);
+      case PART_LEG_L: return legQ(PART_LEG_L, PART_SHIN_L, ph + kPi_, false, 0.62f, 0.2f * bite);
+      case PART_SHIN_L: return legQ(PART_LEG_L, PART_SHIN_L, ph + kPi_, true, 0.62f, 0.2f * bite);
+      case PART_LEG_R: return legQ(PART_LEG_R, PART_SHIN_R, ph, false, 0.62f, 0.2f * bite);
+      case PART_SHIN_R: return legQ(PART_LEG_R, PART_SHIN_R, ph, true, 0.62f, 0.2f * bite);
+      case PART_JAW_OR_TAIL: return mMul(G, mMul(Tq, aroundPivot(pivot, mMul(mRotY(std::sin(a.time * 4.2f) * (0.18f + 0.2f * sp)), mRotX(0.12f * std::cos(a.time * 3.1f) - 0.25f * sp)))));
+      default: return G;
+    }
   }
   float ph = a.walkPhase, s1 = std::sin(ph);
   float bob = (std::fabs(std::cos(ph)) - 0.5f) * 0.035f * sp + 0.004f * breathe;

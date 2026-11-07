@@ -1,114 +1,38 @@
 #!/usr/bin/env python3
-"""Blender (bpy + bmesh + SUBSURF + SOLIDIFY + BEVEL) generator for mon_forest_goblin_raider.glb."""
+"""Forest Goblin Raider - SDF-sculpted lanky goblin: oversized head, huge swept ears, hooked nose, pointed fangs, rusty cap, ragged hide tunic and a jagged cleaver.
+Same pipeline as the orc (smooth-union anatomy -> marching cubes -> Blender Smart UV -> PBR bake -> official glTF export, engine part-blend rig)."""
 import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import numpy as np
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from blender_forge.blender_utils import *
+from sdf_core import *
+import sdf_humanoid as hu, sdf_mats as sm
+from sdf_bake import Model, noise
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-GOBLIN_SKIN = Material("goblin_moss_hide", "fbm_noise", (.28, .44, .18), (.14, .24, .08), rough=.74, scale=8, bump=2.6, seed=171)
-AMBER_EYE = Material("goblin_amber_eye", "runic_glow", (1.0, .65, .1), (.8, .35, .05), rough=.18, emissive=(1.0, .62, .12), scale=4, seed=172)
-
-# 1. Sinewy hunched torso, neck, and crouched limbs
-skin_parts = [
-    # Hunched ribcage & abdomen
-    ell((0.0, 0.72, 0.04), (0.20, 0.24, 0.16), rings=16, sides=22),
-    ell((0.0, 0.54, 0.00), (0.16, 0.15, 0.13), rings=12, sides=18),
-    tube((0.0, 0.88, 0.06), (0.0, 1.02, 0.11), 0.085, sides=14, r2=0.075),
-]
-# Crouched legs & clawed feet (left + right)
-for s in (-1, 1):
-    skin_parts += [
-        tube((s * 0.11, 0.48, 0.00), (s * 0.14, 0.26, 0.07), 0.082, sides=14, r2=0.062),
-        ell((s * 0.14, 0.25, 0.07), (0.064, 0.058, 0.064), rings=10, sides=14),
-        tube((s * 0.14, 0.25, 0.07), (s * 0.13, 0.06, -0.02), 0.058, sides=14, r2=0.045),
-        ell((s * 0.13, 0.04, 0.05), (0.065, 0.038, 0.11), rings=10, sides=14),
-        #Sinewy arms & forearms
-        ell((s * 0.22, 0.82, 0.04), (0.075, 0.075, 0.075), rings=10, sides=14),
-        tube((s * 0.22, 0.80, 0.04), (s * 0.28, 0.58, 0.10), 0.062, sides=14, r2=0.050),
-        tube((s * 0.28, 0.58, 0.10), (s * 0.25, 0.42, 0.24), 0.050, sides=14, r2=0.042),
-        ell((s * 0.25, 0.40, 0.25), (0.048, 0.045, 0.055), rings=10, sides=12),
-    ]
-
-# 2. Head, hooked nose, brow ridge, and long swept goblin ears
-head_parts = [
-    ell((0.0, 1.08, 0.13), (0.145, 0.135, 0.155), rings=16, sides=22),
-    ell((0.0, 1.01, 0.22), (0.095, 0.068, 0.095), rings=12, sides=16),
-    cone(0.042, 0.14, (0.0, 1.06, 0.31), sides=12, rot=(78, 0, 0)),
-    ell((0.0, 1.13, 0.24), (0.11, 0.032, 0.06), rings=8, sides=14),
-]
-for s in (-1, 1):
-    head_parts.append(
-        spline_tube(
-            [(s * 0.13, 1.09, 0.11), (s * 0.26, 1.14, 0.04), (s * 0.39, 1.19, -0.05), (s * 0.48, 1.23, -0.12)],
-            [0.048, 0.038, 0.022, 0.006], rings=14, sides=10, seed=30 + s
-        )
-    )
-
-eyes_mesh = merge([
-    ell((s * 0.058, 1.09, 0.255), (0.024, 0.018, 0.020), rings=8, sides=12)
-    for s in (-1, 1)
-])
-
-# 3. Fangs & bone shoulder spikes
-bone_parts = [
-    cone(0.016, 0.055, (s * 0.042, 0.99, 0.26), sides=8, rot=(-12, 0, -s * 8))
-    for s in (-1, 1)
-] + [
-    cone(0.028, 0.11, (-0.24 + i * 0.04, 0.92, 0.02 + (i - 1) * 0.04), sides=10, rot=(15, 0, 32))
-    for i in range(3)
-] + [
-    cone(0.014, 0.045, (s * (0.09 + c * 0.022), 0.025, 0.15), sides=8, rot=(80, 0, 0))
-    for s in (-1, 1) for c in range(3)
-]
-
-# 4. Stitched leather jerkin, belt, loincloth, and bracers
-leather_parts = [
-    cyl_tri(0.21, 0.30, (0.0, 0.70, 0.03), d=1.5, sides=20, r2=0.17, rings=3),
-    cyl_tri(0.175, 0.07, (0.0, 0.50, 0.01), d=1.5, sides=20),
-    box_tri((0.14, 0.24, 0.025), (0.0, 0.36, 0.13), rot=(-10, 0, 0), d=1.5),
-    box_tri((0.14, 0.22, 0.025), (0.0, 0.36, -0.11), rot=(12, 0, 0), d=1.5),
-    ell((-0.23, 0.85, 0.03), (0.11, 0.07, 0.11), rings=10, sides=14),
-]
-for s in (-1, 1):
-    leather_parts.append(tube((s * 0.27, 0.54, 0.13), (s * 0.25, 0.43, 0.23), 0.056, sides=12, r2=0.048))
-
-# 5. Left-arm wooden buckler shield with iron boss & rim
-buckler_wood = cyl_tri(0.21, 0.032, (0.31, 0.46, 0.24), d=1.2, sides=22, rot=(15, 18, 78))
-buckler_iron = merge([
-    ell((0.33, 0.46, 0.25), (0.055, 0.055, 0.055), rings=10, sides=14),
-    cyl_tri(0.22, 0.020, (0.31, 0.46, 0.24), d=1.2, sides=22, rot=(15, 18, 78)),
-])
-
-# 6. Right-hand jagged iron cleaver
-cleaver_haft = tube((-0.25, 0.38, 0.12), (-0.25, 0.42, 0.38), 0.022, sides=12)
-cleaver_blade = merge([
-    box_tri((0.018, 0.14, 0.42), (-0.25, 0.46, 0.58), rot=(8, 0, 0), d=1.5),
-    cone(0.018, 0.14, (-0.25, 0.52, 0.81), sides=8, rot=(82, 0, 0)),
-    box_tri((0.032, 0.11, 0.035), (-0.25, 0.43, 0.36), d=1.5),
-])
-
-root_node = node("mon_forest_goblin_raider", children=[
-    node("goblin_hide", merge(skin_parts), GOBLIN_SKIN),
-    node("head_skull_ears", merge(head_parts), GOBLIN_SKIN),
-    node("head_amber_eyes", eyes_mesh, AMBER_EYE),
-    node("head_fangs_claws_spikes", merge(bone_parts), BONEM),
-    node("leather_jerkin_gear", merge(leather_parts), LEATHERS),
-    node("buckler_wood_plank", buckler_wood, OAKP),
-    node("buckler_iron_boss", buckler_iron, DARKSTEEL),
-    node("cleaver_wood_grip", cleaver_haft, BEAM),
-    node("cleaver_iron_blade", cleaver_blade, DARKSTEEL),
-])
+def build(out):
+    f, J, hd = hu.humanoid(h=1.28, sh=.175, chest=(.145, .105), belly=.12, arm=.78, leg=.8, mus=.45, hunch=.24, hs=1.4, armL=1.2, neck=.8, jaw=1.15, brow=1.2, nose=2.8, chin=1.5, cheek=.8, ear=2.5, ear_up=.12, brow_drop=.002)
+    s = J["s"]; k = s * 1.4; M = Model("gob", hu.pivots(J), tex=1024)
+    skin = sm.skin("gob_skin", (.42, .52, .17), (.25, .34, .10), (.55, .62, .25), scars=.5, pore=1.2, wrinkle=1.3, nstr=1.3, veins=(.3, .42, .12))
+    hu.skin_pieces(M, f, hd, J, skin, (A(-.6, -.5, -.02), A(.6, .45, 1.55)), hb=.0142, hf=.0068)
+    F = J["F"]; hc = J["headc"]; segs = J["segs"]
+    eye = sm.eye("gob_eye", (hc[0] + .036 * k, hc[1] - .088 * k, hc[2] + .008 * k), (0, -1, 0), (1.0, .85, .05), slit=True, glow=1.0)
+    hu.eyes_teeth(M, J, eye, k * 1.12, True)
+    bone = sm.bone("gob_bone"); hide = sm.leather("gob_hide", (.28, .20, .11), wear=1.8); dark = sm.leather("gob_leather", (.14, .09, .06)); iron = sm.metal("gob_iron", (.45, .42, .40), rough=.55, rust=1.0)
+    for sx in (-1, 1):
+        for dx in (0, .022):
+            b0 = A(hc[0] + sx * (.024 + dx) * k, hc[1] - .104 * k, hc[2] - .071 * k); b1 = b0 + A(0, -.004 * k, .042 * k)
+            M.add(extract(cap(b0, b1, .006 * k, .0008 * k), *hu.bb([b0, b1], .01 * k), .0035 * k), bone, part="head")
+    cp = lambda c: (c[:, 2] > hc[2] + .035 * k) & (c[:, 1] > hc[1] - .1 * k)
+    M.add(hu.shell(F, .016 * k, *hu.bb([hc], .2 * k), .009, cp), iron, segs=segs)   # rusty cap
+    fray = lambda z: (lambda c: c[:, 2] > (z + .05 * noise(c, 9, 41) + .02 * np.sin(c[:, 0] * 70)) * s)
+    M.add(hu.shell(F, .013, A(-.3, -.3, .6) * s, A(.3, .25, 1.55) * s, .0125, lambda c: fray(.78)(c) & (c[:, 2] < 1.5 * s) & (np.abs(c[:, 0]) < J["sh_l"][0] - .02 * s * 0 + .0) | False), hide, segs=segs)
+    for sd in (-1, 1): M.add(hu.shell(F, .015, A(sd * .15, -.2, -.02) * s - .1 * s, A(sd * .15, .12, .36) * s + .1 * s, .0115, lambda c, sd=sd: (c[:, 2] < .30 * s) & (c[:, 0] * sd > 0)), dark, segs=segs)
+    M.add(hu.shell(F, .02, A(-.3, -.3, .9) * s, A(.3, .3, 1.07) * s, .011, lambda c: (c[:, 2] > .93 * s) & (c[:, 2] < 1.0 * s)), dark, segs=segs)
+    G = J["wr_r"] + J["lo_r"] * .125 * s + A(.022 * s, 0, 0); dh = hu.unit((0, -.5, .85))
+    blade = sub(ell((0, .05 * s, .52 * s), (.009 * s, .06 * s, .34 * s)), ell((0, -.05 * s, .6 * s), (.06 * s, .04 * s, .14 * s)), .005)
+    wf = hu.frame(U([lambda p: cap((0, 0, -.22 * s), (0, 0, .2 * s), .02 * s, .018 * s)(p), blade, lambda p: rbox((0, 0, .21 * s), (.015 * s, .06 * s, .01 * s), .006)(p)], .01), G, dh, (1, 0, 0))
+    pts = [G - dh * .3 * s, G + dh * .95 * s]; M.add(extract(wf, *hu.bb(pts, .3 * s), .011), iron, part="weapon_r")
+    M.export(out)
 
 if __name__ == "__main__":
-    p = export_articulated_character_glb(
-        root_node,
-        out("monsters", "mon_forest_goblin_raider"),
-        tex_size=512,
-        is_quadruped=False,
-        node_modifiers={
-            "leather_jerkin_gear": [("SOLIDIFY", {"thickness": 0.012, "offset": 1.0})],
-            "cleaver_iron_blade": [("BEVEL", {"width": 0.005, "segments": 2})],
-            "buckler_wood_plank": [("BEVEL", {"width": 0.006, "segments": 1})],
-        }
-    )
-    print("Blender exported:", p)
+    build(os.path.join(ROOT, "assets/models/monsters/mon_forest_goblin_raider.glb"))
