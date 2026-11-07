@@ -1,5 +1,8 @@
 # MASTER DEVELOPMENT QUEUE — CHRONICLES OF AETHERIA: ISEKAI (REAL BLENDER `bpy` PIPELINE)
 
+### HOTFIX v0.5.0 — Owner overhaul (done)
+- [x] **H1 — Anatomical Blender characters (`anatomy_core/face/body.py`): Hero, Paladin, Orc, Goblin, Direwolf with sculpted faces, fingered hands, 2-segment limbs; hierarchical animator (waist→torso→shoulder→elbow, hip→knee); NaN/black-box + shadow-swim/z-fight flicker fixes; mesh-driven collision (enterable buildings, standable rocks, jump/mantle, camera collision).**
+
 ### Tier 1: Blender Remaster of Core Scene, Skeletal Animation, Foliage, HDR/SSAO & Dynamic VFX
 - [x] **Q01 — Build `tools/blender_forge/` & Remaster Cliffs, Forest Trees, Boulders & Wind-Swaying 3D Grass in Real Blender + Fix Idle Glow Bug**
   - **Fix `v0.3.0` scene issues**:

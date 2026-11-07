@@ -3,14 +3,14 @@
 #include "game_world.hpp"
 #include "kingdom.hpp"
 namespace isekai {
-static float enemyHeight(int k) { return k == EK_ORC ? 3.4f : k == EK_WOLF ? 1.7f : 1.3f; }
+static float enemyHeight(int k) { return k == EK_ORC ? 2.45f : k == EK_WOLF ? 1.0f : 1.22f; }
 static Vec3 spellColor(int k) { return k == 1 ? Vec3{.28f, .88f, 1.f} : k == 2 ? Vec3{.88f, .48f, 1.f} : Vec3{1.f, .42f, .14f}; }
 Scene GameWorld::buildScene() const {
   Scene s; s.time = time; s.heroYaw = heroYaw; s.camYaw = camYaw; s.hp = std::clamp(hp / 100.f, 0.f, 1.f); s.mana = std::clamp(mana / 100.f, 0.f, 1.f);
   s.casting = castFlash > 0; s.activeSpell = activeSpell; s.focus = hero;
   s.cam.eye = camOverride ? ovEye : camEye; s.cam.target = camOverride ? ovTgt : hero + Vec3{0, 1.55f + yOff, 0}; s.cam.fovDeg = 55;
   auto add = [&](const char* k, Mat4 m, float em = 1.f, Vec3 tint = {1, 1, 1}, bool sway = false, AnimState anim = {}, bool shad = true) {
-    Instance i; i.model = M(k); i.M = m; i.emissive = em; i.tint = tint; i.windSway = sway; i.anim = anim; i.castShadow = shad; s.inst.push_back(i);
+    Instance i; i.model = M(k); i.M = m; i.emissive = em; i.tint = tint; i.windSway = sway; i.anim = anim; i.anim.pv = i.model ? i.model->partPivot : nullptr; i.anim.pvHas = i.model ? i.model->partHas : nullptr; i.castShadow = shad; s.inst.push_back(i);
   };
   { Instance g; g.model = M("terrain"); g.M = mIdent(); g.ground = true; g.castShadow = false; s.inst.push_back(g); }
   if (M("grass")) {
@@ -24,7 +24,7 @@ Scene GameWorld::buildScene() const {
   if (M("tavern")) add("tavern", place(tavernPos(), -kPi / 2));
   { float sx = roadCenterX(2.f) + 3.6f; add("sign", fit(M("sign"), 2.9f, {sx, terrainHeight(sx, 2.f), 2.f}, 0.35f)); }
   { Vec3 w = wagonPos(); float cx = w.x + 3.4f, cz = w.z - 1.f; add("chest", fit(M("chest"), 0.9f, {cx, terrainHeight(cx, cz), cz}, -0.5f)); }
-  { AnimState pa; pa.rig = RIG_BIPED; pa.time = time; pa.walkPhase = time * 2.f; add("paladin", fit(M("paladin"), 2.3f, paladinPos(), kPi + 0.25f), 1.f, {1, 1, 1}, false, pa); }
+  { AnimState pa; pa.rig = RIG_BIPED; pa.time = time; pa.walkPhase = time * 2.f; add("paladin", fit(M("paladin"), 2.0f, paladinPos(), kPi + 0.25f), 1.f, {1, 1, 1}, false, pa); }
   for (int i = 0; i < 10; i++) {
     float z = -18.f - i * 9.5f, side = (i % 2 ? 1.f : -1.f), x = roadCenterX(z) + side * (17.5f + (i % 3) * 4.5f);
     add("cliff", fit(M("cliff"), 7.5f + (i % 4) * 1.8f, {x, terrainHeight(x, z) - 0.5f, z}, i * 1.1f));
@@ -41,8 +41,8 @@ Scene GameWorld::buildScene() const {
     add("boulder", fit(M("boulder"), 1.0f + (i % 4) * 0.45f, {x, terrainHeight(x, z) - 0.18f, z}, i * 2.1f));
   }
   // Hero with hierarchical skeletal animation
-  float roll = rollT > 0 ? (1.f - rollT / 0.5f) * 2 * kPi : 0.f, bob = std::fabs(std::sin(runPhase)) * 0.04f; Vec3 hp3 = hero + Vec3{0, yOff + bob, 0};
-  Mat4 hm = mMul(mTrans(hp3), mMul(mRotY(heroYaw), mMul(mTrans({0, .9f, 0}), mMul(mRotX(roll), mTrans({0, -.9f, 0}))))); Vec3 ht{1.f, 1 - hurtFlash, 1 - hurtFlash};
+  float roll = 0.f, bob = 0.f; Vec3 hp3 = hero + Vec3{0, yOff + bob, 0};
+  Mat4 hm = mMul(mTrans(hp3), mMul(mRotY(heroYaw), mScale(1.12f))); Vec3 ht{1.f, 1 - hurtFlash, 1 - hurtFlash};
   AnimState ha; ha.rig = RIG_HERO; ha.time = time; ha.walkPhase = runPhase; ha.speed = vlen({heroVel.x, 0.f, heroVel.z});
   ha.slashProgress = slashProgress(); ha.combo = combo; ha.slashing = slashT > 0.f;
   ha.castWeight = std::clamp(castFlash / 0.35f, 0.f, 1.f); ha.rollProgress = rollT > 0.f ? 1.f - rollT / 0.5f : 0.f; ha.airborne = !onGround;

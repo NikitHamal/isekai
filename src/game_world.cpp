@@ -32,6 +32,9 @@ void GameWorld::loadAll(const std::string& root) {
   models["grass"] = std::make_unique<Model>(makeGrassFieldModel());
   models["rune"] = std::make_unique<Model>(makeRuneCircleModel()); }
 Mat4 GameWorld::fit(const Model* m, float height, Vec3 pos, float yaw) const {
+  bool chr = m->name.rfind("chr_", 0) == 0 || m->name.rfind("mon_", 0) == 0 || m->name.rfind("enm_", 0) == 0;
+  if (chr && m->bodyH > 0.1f) {   // characters are authored around their feet origin: scale by body height, never re-centre on the sword/cloak bbox
+    float s = height / m->bodyH; return mMul(mTrans(pos), mMul(mRotY(yaw), mMul(mScale(s), mTrans({0.f, -m->bmin.y, 0.f})))); }
   float ext = std::max(m->bmax.y - m->bmin.y, 0.01f), s = height / ext; Vec3 c = (m->bmin + m->bmax) * 0.5f;
   return mMul(mTrans(pos), mMul(mRotY(yaw), mMul(mScale(s), mTrans({-c.x, -m->bmin.y, -c.z})))); }
 void GameWorld::burst(Vec3 p, int n, Vec3 col, float speed, float size) {
@@ -39,7 +42,12 @@ void GameWorld::burst(Vec3 p, int n, Vec3 col, float speed, float size) {
     parts.push_back({p, {std::cos(a) * std::cos(e) * sp, std::sin(e) * sp + speed * .4f, std::sin(a) * std::cos(e) * sp}, 0.6f + (rand() % 500) / 1000.f, 1.f, size, col}); } }
 void GameWorld::spawn(int kind, Vec3 p) {
   Enemy e; e.kind = kind; p.y = gy(p.x, p.z); e.pos = e.home = p; e.patrolT = (rand() % 100) / 10.f; e.hp = e.maxHp = kind == EK_ORC ? 9.f : kind == EK_WOLF ? 4.f : 3.f; enemies.push_back(e); }
+void GameWorld::buildCollision() {
+  collReady = true; Scene sc = buildScene();
+  const char* keys[] = {"guild", "keep", "wagon", "forge", "tower", "tavern", "sign", "chest", "cliff", "tree", "pine", "boulder"};
+  for (const Instance& i : sc.inst) { if (!i.model || i.ground || i.anim.rig != RIG_STATIC) continue; bool ok = false; for (const char* k : keys) if (M(k) == i.model) ok = true; if (ok) coll.addModel(*i.model, i.M); } }
 void GameWorld::update(const Input& in, float dt, float) {
+  if (!collReady) buildCollision();
   dt = std::min(dt, 0.05f); time += dt;
   cameraUpdate(in, dt);
   for (auto& p : parts) { p.life -= dt; p.v.y -= 5.f * dt; p.p = p.p + p.v * dt; } parts.erase(std::remove_if(parts.begin(), parts.end(), [](const Particle& p) { return p.life <= 0; }), parts.end());

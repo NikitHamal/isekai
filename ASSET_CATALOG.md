@@ -62,3 +62,6 @@ Pipeline: `tools/assets/gen_<slug>.py` -> `assets/models/<category>/<slug>.glb` 
 - [x] `prp_wooden_wayfinder_signpost` (>= 3,000 tris)
 - [ ] `prp_iron_street_lamp_post` (>= 3,500 tris)
 - [ ] `prp_medieval_market_barrels_crates` (>= 4,500 tris)
+
+## v0.5.0 anatomical remaster
+- chr_hero_kaelen_adventurer, chr_ally_garrick_royal_paladin, mon_orc_warlord_berserker, mon_forest_goblin_raider, mon_shadow_direwolf_alpha: rebuilt via `anatomy_*.py` (35k-58k tris, joint-pivoted parts: torso/head/cloak/arm/forearm/leg/shin/weapon_r/tail).

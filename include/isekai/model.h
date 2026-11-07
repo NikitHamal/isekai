@@ -26,7 +26,11 @@ enum PartId : int {
   PART_LEG_R = 7,
   PART_WEAPON_R = 8,
   PART_JAW_OR_TAIL = 9,
-  PART_COUNT = 10
+  PART_FOREARM_L = 10,
+  PART_FOREARM_R = 11,
+  PART_SHIN_L = 12,
+  PART_SHIN_R = 13,
+  PART_COUNT = 14
 };
 
 struct Texture { int w = 0, h = 0; std::vector<uint8_t> rgba; bool valid() const { return w > 0; } };
@@ -41,6 +45,8 @@ struct Primitive {
 };
 struct Model {
   std::string path, name; std::vector<Texture> textures; std::vector<Material> materials; std::vector<Primitive> prims;
+  Vec3 partPivot[PART_COUNT]; bool partHas[PART_COUNT] = {};   // joint pivots (waist, shoulders, elbows, hips, knees ...) read from glTF node origins
+  float bodyH = 0.f;   // height of the body excluding held weapons (used to scale characters)
   int nodeCount = 0; Vec3 bmin{1e9f, 1e9f, 1e9f}, bmax{-1e9f, -1e9f, -1e9f};
   size_t triangles() const { size_t t = 0; for (auto& p : prims) t += p.idx.size() / 3; return t; }
 };

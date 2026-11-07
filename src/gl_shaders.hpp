@@ -23,11 +23,11 @@ float D(float nh,float a){ float a2=a*a; float d=nh*nh*(a2-1.0)+1.0; return a2/(
 float Gs(float nv,float nl,float r){ float k=(r+1.0)*(r+1.0)/8.0; return (nv/(nv*(1.0-k)+k))*(nl/(nl*(1.0-k)+k)); }
 vec3 brdf(vec3 N,vec3 V,vec3 L,vec3 rad,vec3 alb,float rough,float met){
   vec3 H=normalize(V+L); float nl=max(dot(N,L),0.0), nv=max(dot(N,V),1e-3), nh=max(dot(N,H),0.0), vh=max(dot(V,H),0.0);
-  vec3 F0=mix(vec3(0.04),alb,met); vec3 F=F0+(1.0-F0)*pow(1.0-vh,5.0); float a=max(rough*rough,0.02);
+  vec3 F0=mix(vec3(0.04),alb,met); vec3 F=F0+(1.0-F0)*pow(clamp(1.0-vh,0.0,1.0),5.0); float a=max(rough*rough,0.02);
   vec3 spec=D(nh,a)*Gs(nv,nl,rough)*F/(4.0*nv*max(nl,1e-3)); vec3 kd=(1.0-F)*(1.0-met);
   return (kd*alb/PI+spec)*rad*nl; }
 float shadowAt(vec3 wp, vec3 n){
-  vec4 p=uLVP*vec4(wp+n*0.07,1.0); vec3 c=p.xyz/p.w*0.5+0.5; if(c.x<0.0||c.x>1.0||c.y<0.0||c.y>1.0||c.z>1.0) return 1.0;
+  vec4 p=uLVP*vec4(wp+n*0.10,1.0); vec3 c=p.xyz/p.w*0.5+0.5; if(c.x<0.0||c.x>1.0||c.y<0.0||c.y>1.0||c.z>1.0) return 1.0;
   vec2 ts=1.0/vec2(textureSize(uShadow,0)); float s=0.0; float bias=0.0006;
   for(int y=-1;y<=1;y++) for(int x=-1;x<=1;x++) s+= (c.z-bias > texture(uShadow,c.xy+vec2(x,y)*ts*1.4).r) ? 0.0 : 1.0;
   return s/9.0; }
@@ -48,17 +48,17 @@ vec3 terrain(vec3 wp, out float hgt, out float rough){
     col=mix(col,mix(mud*0.55,c,sst(0.015,0.045,edge)),m); hgt=mix(hgt,bev*0.05+n4*0.01,m); rough=mix(rough,0.82,m); }
   return col; }
 void main(){
-  vec3 alb=uBase.rgb; float rough=0.7, met=0.0; vec3 N=normalize(vN); vec3 V=normalize(uCam-vWP); vec3 em=vec3(0.0);
+  vec3 alb=uBase.rgb; float rough=0.7, met=0.0; vec3 N=normalize(vN+vec3(1e-6)); vec3 V=normalize(uCam-vWP); vec3 em=vec3(0.0);
   if(uGround==1){ float h,r; alb=terrain(vWP,h,r); rough=r;
     vec3 dpx=dFdx(vWP), dpy=dFdy(vWP); float dhx=dFdx(h), dhy=dFdy(h); vec3 r1=cross(dpy,N), r2=cross(N,dpx); float det=dot(dpx,r1);
-    vec3 grad=sign(det)*(dhx*r1+dhy*r2); N=normalize(abs(det)*N-grad*0.9); }
+    vec3 grad=sign(det)*(dhx*r1+dhy*r2); float bf=1.0-smoothstep(6.0,26.0,length(uCam-vWP)); N=normalize(abs(det)*N-grad*0.9*bf+N*1e-6); }
   else {
     if(uHas.x>0.5) alb=pow(texture(uAlb,vUV).rgb,vec3(2.2))*uBase.rgb;
     if(uHas.z>0.5){ vec3 mr=texture(uMR,vUV).rgb; rough=clamp(mr.g,0.05,1.0); met=mr.b; }
     if(dot(N,V)<0.0) N=-N;
-    if(uHas.y>0.5){ vec3 T=normalize(vT.xyz); T=normalize(T-N*dot(N,T)); vec3 B=cross(N,T)*vT.w; vec3 t=texture(uNrm,vUV).xyz*2.0-1.0; N=normalize(T*t.x+B*t.y+N*t.z); }
+    if(uHas.y>0.5){ vec3 T=vT.xyz+vec3(1e-6,0.0,0.0); T=T-N*dot(N,T); T=(dot(T,T)>1e-8)?normalize(T):normalize(cross(N,vec3(0.0,1.0,0.001))); vec3 B=cross(N,T)*vT.w; vec3 t=texture(uNrm,vUV).xyz*2.0-1.0; N=normalize(T*t.x+B*t.y+N*t.z); }
     if(uHas.w>0.5) em=pow(texture(uEm,vUV).rgb,vec3(2.2))*uEmF*uEmBoost * 1.8; }
-  alb*=uTint; vec3 Ng=normalize(vN);
+  alb*=uTint; vec3 Ng=normalize(vN+vec3(1e-6));
   float sh=shadowAt(vWP,uGround==1?normalize(vN):(dot(Ng,V)<0.0?-Ng:Ng));
   vec3 sunCol=vec3(3.4,2.5,1.55); vec3 col=brdf(N,V,uSun,sunCol*sh,alb,rough,met);
   float ao=(uGround==1)?1.0:mix(0.52,1.0,smoothstep(0.0,2.2,vWP.y-uBaseY));
@@ -66,14 +66,14 @@ void main(){
   col+=alb*amb*(1.0-met*0.6)*ao;
   // Golden-hour directional sun rim-lighting on characters, foliage & architecture
   if(uGround==0){
-    float rim=pow(1.0-max(dot(N,V),0.0),3.0); float sb=clamp(dot(N,uSun)*0.5+0.5,0.0,1.0);
+    float rim=pow(clamp(1.0-dot(N,V),0.0,1.0),3.0); float sb=clamp(dot(N,uSun)*0.5+0.5,0.0,1.0);
     col+=vec3(1.45,0.88,0.42)*rim*sb*(0.35+0.65*sh)*(0.4+0.6*ao);
   }
   for(int i=0;i<uNL;i++){ vec3 d=uLP[i]-vWP; float dist=length(d); float att=clamp(1.0-pow(dist/uLR[i],2.0),0.0,1.0); att*=att/(1.0+dist*dist*0.35);
     col+=brdf(N,V,d/dist,uLC[i]*att,alb,rough,met); }
   col+=em; float dist=length(uCam-vWP); float fog=1.0-exp(-pow(dist*0.011,1.35));
   float sunAmt=pow(max(dot(normalize(vWP-uCam),uSun),0.0),3.5); vec3 fogC=mix(uHoriz*0.85,vec3(1.15,0.76,0.45),sunAmt*0.7);
-  col=mix(col,fogC,clamp(fog,0.0,1.0)); oC=vec4(col,uBase.a); })";
+  col=mix(col,fogC,clamp(fog,0.0,1.0)); col=clamp(col,vec3(0.0),vec3(24.0)); if(!(col.r==col.r&&col.g==col.g&&col.b==col.b)) col=vec3(0.0); oC=vec4(col,uBase.a); })";
 static const char* kSkyVS = R"(#version 330 core
 out vec2 vP; void main(){ vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2); vP=p*2.0-1.0; gl_Position=vec4(vP,0.9999,1.0); })";
 static const char* kSkyFS = R"(#version 330 core
@@ -93,18 +93,18 @@ void main(){
   vec2 uv=vP*0.5+0.5; float w[5]=float[](0.227027,0.1945946,0.1216216,0.054054,0.016216);
   vec3 acc=vec3(0.0);
   for(int i=-4;i<=4;i++){
-    vec3 c=texture(uTex,uv+uDir*float(i)).rgb;
+    vec3 c=texture(uTex,uv+uDir*float(i)).rgb; c=clamp(c,vec3(0.0),vec3(16.0)); if(!(c.r==c.r&&c.g==c.g&&c.b==c.b)) c=vec3(0.0);
     if(uExtract==1){ float br=max(max(c.r,c.g),c.b); c*=clamp((br-1.1)/max(br,1e-4),0.0,1.0); }
     acc+=c*w[abs(i)];
   }
-  oC=vec4(acc,1.0); })";
+  oC=vec4(min(acc,vec3(16.0)),1.0); })";
 static const char* kPostFS = R"(#version 330 core
 in vec2 vP; out vec4 oC; uniform sampler2D uScene; uniform sampler2D uDepth; uniform sampler2D uBloom; uniform vec2 uInvRes;
-float linZ(vec2 uv){ float d=texture(uDepth,uv).r*2.0-1.0; return (2.0*0.1*500.0)/(500.0+0.1-d*(500.0-0.1)); }
+float linZ(vec2 uv){ float d=texture(uDepth,uv).r*2.0-1.0; return (2.0*0.25*400.0)/(400.0+0.25-d*(400.0-0.25)); }
 vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14),0.0,1.0); }
 void main(){
-  vec2 uv=vP*0.5+0.5; vec3 hdr=texture(uScene,uv).rgb; float zc=linZ(uv); float ao=1.0;
-  if(zc<420.0){
+  vec2 uv=vP*0.5+0.5; vec3 hdr=texture(uScene,uv).rgb; hdr=clamp(hdr,vec3(0.0),vec3(32.0)); if(!(hdr.r==hdr.r&&hdr.g==hdr.g&&hdr.b==hdr.b)) hdr=vec3(0.0); float zc=linZ(uv); float ao=1.0;
+  if(zc<380.0){
     float occ=0.0; float rad=clamp(10.0/zc,1.5,9.0);
     float ang=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453)*6.28318;
     for(int i=0;i<12;i++){
@@ -114,7 +114,7 @@ void main(){
     }
     ao=clamp(1.0-occ*(0.58/12.0),0.38,1.0);
   }
-  vec3 col=hdr*ao+texture(uBloom,uv).rgb*0.72;
+  vec3 bl=clamp(texture(uBloom,uv).rgb,vec3(0.0),vec3(16.0)); if(!(bl.r==bl.r&&bl.g==bl.g&&bl.b==bl.b)) bl=vec3(0.0); vec3 col=hdr*ao+bl*0.72;
   col=aces(col*0.80); oC=vec4(pow(col,vec3(1.0/2.2)),1.0); })";
 static const char* kHudVS = R"(#version 330 core
 layout(location=0) in vec2 aP; layout(location=1) in vec2 aUV; layout(location=2) in vec4 aC; uniform vec2 uRes; out vec2 vUV; out vec4 vC;

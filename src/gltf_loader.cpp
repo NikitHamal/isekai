@@ -48,6 +48,10 @@ static void rigCharacterParts(Model& out) {
     else if (n.rfind("cloak", 0) == 0) fixed = PART_CLOAK;
     else if (n.rfind("arm_l", 0) == 0 || n.rfind("wing_l", 0) == 0) fixed = PART_ARM_L;
     else if (n.rfind("arm_r", 0) == 0 || n.rfind("wing_r", 0) == 0) fixed = PART_ARM_R;
+    else if (n.rfind("forearm_l", 0) == 0) fixed = PART_FOREARM_L;
+    else if (n.rfind("forearm_r", 0) == 0) fixed = PART_FOREARM_R;
+    else if (n.rfind("shin_l", 0) == 0) fixed = PART_SHIN_L;
+    else if (n.rfind("shin_r", 0) == 0) fixed = PART_SHIN_R;
     else if (n.rfind("leg_l", 0) == 0) fixed = PART_LEG_L;
     else if (n.rfind("leg_r", 0) == 0) fixed = PART_LEG_R;
     else if (n.rfind("weapon_r", 0) == 0) fixed = PART_WEAPON_R;
@@ -89,6 +93,9 @@ static void rigCharacterParts(Model& out) {
     }
   }
   out.prims = std::move(rigged);
+  for (auto& P : out.prims) if (!out.partHas[P.partId]) { out.partHas[P.partId] = true; out.partPivot[P.partId] = P.pivot; }
+  { float top = out.bmin.y; for (auto& P : out.prims) if (P.partId != PART_WEAPON_R) for (auto& v : P.pos) top = std::max(top, v.y); out.bodyH = top - out.bmin.y; }
+  if (!out.partHas[PART_WEAPON_R] && out.partHas[PART_FOREARM_R]) out.partPivot[PART_WEAPON_R] = out.partPivot[PART_FOREARM_R];
 }
 
 bool loadGlb(const std::string& path, Model& out, std::string& err) {

@@ -14,6 +14,7 @@
 extern "C" { __declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001; __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1; }
 #endif
 #include "game_world.hpp"
+#include "kingdom.hpp"
 #include "soft_extra.hpp"
 namespace isekai { int runInteractive(const std::string& root); }
 namespace fs = std::filesystem;
@@ -47,9 +48,25 @@ static int verifyHeadless(const std::string& root) {
   return (failed == 0 && png) ? 0 : 1;
 }
 
+static int runPhysicsTest(const std::string& root) {
+  GameWorld w(root); Input in; float dt = 1.f / 60.f; w.update(in, dt, 1.f); std::printf("collision grids: %zu\n", w.collisionGrids());
+  struct B { const char* n; Vec3 c; float r; } bs[] = {{"guild", guildPos(), 14.f}, {"tavern", tavernPos(), 12.f}, {"forge", forgePos(), 10.f}, {"tower", towerPos(), 9.f}};
+  int fails = 0;
+  for (auto& b : bs) { float bestD = 1e9f, bestY = 0; int enter = 0;
+    for (int k = 0; k < 36; k++) { float a = k * 6.2831853f / 36; Vec3 p = b.c + Vec3{std::cos(a) * b.r, 0, std::sin(a) * b.r}; p.y = terrainHeight(p.x, p.z);
+      float yaw = std::atan2(b.c.x - p.x, b.c.z - p.z); w.debugPlace(p, yaw); Input mv; mv.down['W'] = true; for (int i = 0; i < 60 * 9; i++) { w.update(mv, dt, 1.f); mv.pressed[' '] = false; }
+      Vec3 h = w.heroPos(); float d = std::sqrt((h.x - b.c.x) * (h.x - b.c.x) + (h.z - b.c.z) * (h.z - b.c.z)); if (d < b.r * 0.55f && h.y > terrainHeight(h.x, h.z) + 0.3f) enter++; if (d < bestD) { bestD = d; bestY = h.y; } }
+    std::printf("[%s] %s: runs that walked inside (up the threshold onto the interior floor) = %d/36 (closest %.2f m, floor y %.2f)\n", enter ? " OK " : "FAIL", b.n, enter, bestD, bestY); if (!enter) fails++; }
+  // jump onto a boulder / cliff: walk forward + jump into the first one we meet
+  { Vec3 p = {roadCenterX(2.f) + 5.2f, 0, 2.f}; p.y = terrainHeight(p.x, p.z); float maxY = p.y; w.debugPlace(p, 1.5707963f); Input mv; mv.down['W'] = true;
+    for (int i = 0; i < 60 * 8; i++) { if (i % 40 == 5) mv.pressed[' '] = true; w.update(mv, dt, 1.f); mv.pressed[' '] = false; maxY = std::max(maxY, w.heroPos().y); }
+    std::printf("[ OK ] jump/climb probe: max feet height reached %.2f m above start terrain\n", maxY - terrainHeight(p.x, p.z)); }
+  std::printf("physics-test: %d failure(s)\n", fails); return fails ? 1 : 0; }
 int main(int argc, char** argv) {
   std::string root = "."; bool headless = false;
-  for (int i = 1; i < argc; i++) { if (!std::strcmp(argv[i], "--verify-headless")) headless = true; else if (!std::strcmp(argv[i], "--root") && i + 1 < argc) root = argv[++i]; }
+  bool physTest = false;
+  for (int i = 1; i < argc; i++) { if (!std::strcmp(argv[i], "--verify-headless")) headless = true; else if (!std::strcmp(argv[i], "--physics-test")) physTest = true; else if (!std::strcmp(argv[i], "--root") && i + 1 < argc) root = argv[++i]; }
+  if (physTest) return runPhysicsTest(root);
   if (headless) return verifyHeadless(root);
 #ifdef _WIN32
   char exe[MAX_PATH]; if (GetModuleFileNameA(nullptr, exe, MAX_PATH)) {  // find assets/ next to isekai.exe (or one level up if inside bin/)

@@ -7,6 +7,7 @@
 #include "math3d.hpp"
 #include "platform.hpp"
 #include "scene.hpp"
+#include "collision.hpp"
 namespace isekai {
 enum EnemyKind { EK_GOBLIN = 0, EK_ORC = 1, EK_WOLF = 2 };
 struct Particle { Vec3 p, v; float life, maxLife, size; Vec3 col; };
@@ -23,6 +24,9 @@ class GameWorld {
   Scene buildScene() const;
   void stageShowcase();     // staged hero + combat frame for headless verification
   Vec3 heroPos() const { return hero; }
+  void debugPlace(Vec3 p, float camYawIn) { hero = p; heroVel = {}; vy = 0; onGround = true; camYaw = camYawIn; camInit = false; }
+  bool debugGrounded() const { return onGround; }
+  size_t collisionGrids() const { return coll.gridCount(); }
  private:
   const Model* M(const char* name) const { auto it = models.find(name); return it == models.end() ? nullptr : it->second.get(); }
   Mat4 fit(const Model* m, float height, Vec3 pos, float yaw) const;
@@ -34,6 +38,8 @@ class GameWorld {
   void enemiesUpdate(float dt);
   void boltsUpdate(float dt);
   void startSlash(); void castSpell();
+  void buildCollision(); bool tryMove(float nx, float nz); void moveEntity(Vec3& pos, Vec3 delta, float r);
+  Collision coll; bool collReady = false; bool jumpHeld = false;
   void damage(Enemy& e, float dmg, Vec3 from, float knock);
   Vec3 handPos() const; Vec3 swordDir() const; Mat4 swordRot() const; float slashProgress() const;
   std::map<std::string, std::unique_ptr<Model>> models; bool found = false; int loaded = 0;

@@ -91,10 +91,14 @@ void GLRenderer::draw(const Scene& s, int w, int h) {
   if (w < 2 || h < 2) return;
   ensureFbos(w, h);
   Vec3 sun = normalize(s.sunDir); const float ext = 48.f;
-  Mat4 lvp = mMul(mOrtho(-ext, ext, -ext, ext, 1.f, 260.f), mLookAt(s.focus + sun * 120.f, s.focus)); shadowPass(s, lvp);
+  // Texel-snapped sun shadow frustum: the focus is quantised to the shadow texel grid in light space so shadows never swim/flicker while moving.
+  Vec3 lz = sun, lx = normalize(cross({0, 1, 0}, lz)), ly = cross(lz, lx); float texel = 2.f * ext / float(kShadowRes);
+  float sx = std::floor(dot(s.focus, lx) / texel) * texel, sy = std::floor(dot(s.focus, ly) / texel) * texel, sz = dot(s.focus, lz);
+  Vec3 snapped = lx * sx + ly * sy + lz * sz;
+  Mat4 lvp = mMul(mOrtho(-ext, ext, -ext, ext, 1.f, 260.f), mLookAt(snapped + sun * 120.f, snapped)); shadowPass(s, lvp);
   glBindFramebuffer(GL_FRAMEBUFFER, sceneFbo);
   glViewport(0, 0, w, h); glClearColor(.05f, .08f, .05f, 1); glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  float aspect = float(w) / h; Mat4 P = mPersp(s.cam.fovDeg, aspect, 0.1f, 500.f), V = mLookAt(s.cam.eye, s.cam.target), VP = mMul(P, V);
+  float aspect = float(w) / h; Mat4 P = mPersp(s.cam.fovDeg, aspect, 0.25f, 400.f), V = mLookAt(s.cam.eye, s.cam.target), VP = mMul(P, V);
   Vec3 f = normalize(s.cam.target - s.cam.eye), r = normalize(cross(f, {0, 1, 0})), u = cross(r, f); float tanH = std::tan(s.cam.fovDeg * .5f * kPi / 180.f);
   glDisable(GL_DEPTH_TEST); glDisable(GL_BLEND); glDisable(GL_CULL_FACE); glUseProgram(sky);
   glUniform3f(U(sky, "uF"), f.x, f.y, f.z); glUniform3f(U(sky, "uR"), r.x, r.y, r.z); glUniform3f(U(sky, "uU"), u.x, u.y, u.z); glUniform2f(U(sky, "uTan"), tanH * aspect, tanH); glUniform3f(U(sky, "uSun"), sun.x, sun.y, sun.z);
