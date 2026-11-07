@@ -21,7 +21,7 @@
   - Upgraded `src/game_hero.cpp` and `src/game_world.cpp` with 3 switchable spells (Crimson Flare, Glacial Fang, Aether Judgment), rotating runic magic circles, curved triangle-strip ribbon sword trails, metallic hit sparks, 40ms hit-stop, and camera impulse shake.
 
 ### Tier 2: Expand Valoria Kingdom Architecture, Allies, River Ruins & Mounts (All Built in Blender `bpy`)
-- [ ] **Q06 — Valoria Town Plaza in Blender: Blacksmith Forge (`bld_blacksmith_forge_shop`), Magic Tower (`bld_apothecary_magic_tower`) & Tavern Inn (`bld_medieval_tavern_inn`)**
+- [x] **Q06 — Valoria Town Plaza in Blender: Blacksmith Forge (`bld_blacksmith_forge_shop`), Magic Tower (`bld_apothecary_magic_tower`) & Tavern Inn (`bld_medieval_tavern_inn`)**
   - Model all 3 medieval buildings in Blender (`>= 9,000` tris each, beveled stonework, arrayed roof tiles, glowing forge furnace, copper astronomical dome, tavern balcony) and place them around the Valoria town plaza.
 - [ ] **Q07 — Isekai Party Allies in Blender: High-Elf Archmage Sylphie (`chr_ally_sylphie_elf_mage`) & Beastkin Rogue Lyra (`chr_ally_lyra_beastkin_rogue`) + Companion Combat AI**
   - Sculpt/model both articulated characters in Blender (`>= 10,000` tris with limb pivots) and spawn them as active AI party members who follow the Hero and fight monsters with ranged arcane bolts and twin-dagger strikes.

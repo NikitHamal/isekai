@@ -19,6 +19,9 @@ Scene GameWorld::buildScene() const {
   }
   auto place = [&](Vec3 p, float yaw) { return mMul(mTrans(p), mRotY(yaw)); };
   add("guild", place(guildPos(), kPi / 2)); add("keep", place(keepPos(), kPi)); add("wagon", place(wagonPos(), 0.12f));
+  if (M("forge")) add("forge", place(forgePos(), -kPi / 2));
+  if (M("tower")) add("tower", place(towerPos(), kPi / 3));
+  if (M("tavern")) add("tavern", place(tavernPos(), -kPi / 2));
   { float sx = roadCenterX(2.f) + 3.6f; add("sign", fit(M("sign"), 2.9f, {sx, terrainHeight(sx, 2.f), 2.f}, 0.35f)); }
   { Vec3 w = wagonPos(); float cx = w.x + 3.4f, cz = w.z - 1.f; add("chest", fit(M("chest"), 0.9f, {cx, terrainHeight(cx, cz), cz}, -0.5f)); }
   { AnimState pa; pa.rig = RIG_BIPED; pa.time = time; pa.walkPhase = time * 2.f; add("paladin", fit(M("paladin"), 2.3f, paladinPos(), kPi + 0.25f), 1.f, {1, 1, 1}, false, pa); }

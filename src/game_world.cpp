@@ -5,7 +5,7 @@
 namespace isekai {
 static const struct { const char* key; const char* path; } kAssets[] = {
   {"hero", "characters/chr_hero_kaelen_adventurer"}, {"paladin", "characters/chr_ally_garrick_royal_paladin"},
-  {"guild", "buildings/bld_valoria_adventurer_guild"}, {"keep", "buildings/bld_royal_citadel_keep"}, {"wagon", "vehicles/veh_merchant_covered_wagon"},
+  {"guild", "buildings/bld_valoria_adventurer_guild"}, {"keep", "buildings/bld_royal_citadel_keep"}, {"forge", "buildings/bld_blacksmith_forge_shop"}, {"tower", "buildings/bld_apothecary_magic_tower"}, {"tavern", "buildings/bld_medieval_tavern_inn"}, {"wagon", "vehicles/veh_merchant_covered_wagon"},
   {"orc", "monsters/mon_orc_warlord_berserker"}, {"wolf", "monsters/mon_shadow_direwolf_alpha"}, {"goblin", "monsters/mon_forest_goblin_raider"},
   {"slime", "monsters/mon_emerald_mana_slime_king"}, {"cliff", "environment/env_mossy_forest_cliff_modular"},
   {"tree", "environment/env_sacred_world_tree_canopy"}, {"sign", "props/prp_wooden_wayfinder_signpost"},
