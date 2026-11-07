@@ -14,6 +14,7 @@ inline Mat4 mRotX(float a) { Mat4 m = mIdent(); float c = std::cos(a), s = std::
 inline Mat4 mRotZ(float a) { Mat4 m = mIdent(); float c = std::cos(a), s = std::sin(a); m[0] = c; m[1] = s; m[4] = -s; m[5] = c; return m; }
 inline Mat4 mPersp(float fovDeg, float aspect, float n, float f) {
   float t = 1.f / std::tan(fovDeg * 0.5f * kPi / 180.f); Mat4 m{}; m[0] = t / aspect; m[5] = t; m[10] = (f + n) / (n - f); m[11] = -1; m[14] = 2 * f * n / (n - f); return m; }
+inline Mat4 mOrtho(float l, float r, float b, float t, float n, float f) { Mat4 m = mIdent(); m[0] = 2 / (r - l); m[5] = 2 / (t - b); m[10] = -2 / (f - n); m[12] = -(r + l) / (r - l); m[13] = -(t + b) / (t - b); m[14] = -(f + n) / (f - n); return m; }
 inline Mat4 mLookAt(Vec3 e, Vec3 c) {
   Vec3 f = normalize(c - e), r = normalize(cross(f, {0, 1, 0})), u = cross(r, f); Mat4 m = mIdent();
   m[0] = r.x; m[4] = r.y; m[8] = r.z; m[1] = u.x; m[5] = u.y; m[9] = u.z; m[2] = -f.x; m[6] = -f.y; m[10] = -f.z;

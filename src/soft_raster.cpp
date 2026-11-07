@@ -2,9 +2,12 @@
 #include "stb_image_write.h"
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
+#include <cstdio>
 #include <isekai/model.h>
 #include "math3d.hpp"
 #include "soft_extra.hpp"
+#include "terrain.hpp"
 namespace isekai {
 static Vec3 sample(const Texture& t, float u, float v) {
   if (!t.valid()) return {1, 1, 1};
@@ -21,9 +24,9 @@ void clearFrame(Framebuffer& fb, Vec3 top, Vec3 bot) {
 
 struct SV { float sx, sy, z; Vec3 wp, n, t; float u, v, tw; };
 
-void drawInstance(Framebuffer& fb, const Camera& cam, const Model& m, const Mat4& MM, Vec3 tint) {
+void drawInstance(Framebuffer& fb, const Camera& cam, const Model& m, const Mat4& MM, Vec3 tint, bool ground) {
   Vec3 f = normalize(cam.target - cam.eye), r = normalize(cross(f, {0, 1, 0})), up = cross(r, f);
-  float tanH = std::tan(cam.fovDeg * 0.5f * 3.14159265f / 180.f), aspect = float(fb.w) / fb.h; Vec3 L = normalize({0.5f, 0.8f, 0.45f});
+  float tanH = std::tan(cam.fovDeg * 0.5f * 3.14159265f / 180.f), aspect = float(fb.w) / fb.h; Vec3 L = gEnv.sm ? gEnv.sun : normalize({0.5f, 0.8f, 0.45f});
   for (const Primitive& P : m.prims) {
     const Material* mat = P.material >= 0 ? &m.materials[P.material] : nullptr; auto tex = [&](int i) -> const Texture* { return i >= 0 ? &m.textures[i] : nullptr; };
     const Texture *A = mat ? tex(mat->base) : nullptr, *NM = mat ? tex(mat->normal) : nullptr, *EM = mat ? tex(mat->emissive) : nullptr, *MR = mat ? tex(mat->mr) : nullptr;
@@ -44,20 +47,21 @@ void drawInstance(Framebuffer& fb, const Camera& cam, const Model& m, const Mat4
         if (w0 < 0 || w1 < 0 || w2 < 0) continue;
         float pa = w0 / a.z, pb = w1 / b.z, pc = w2 / c.z, inv = 1.f / (pa + pb + pc); float z = inv; size_t di = size_t(y) * fb.w + x; if (z >= fb.depth[di]) continue;
         pa *= inv; pb *= inv; pc *= inv; float u = a.u * pa + b.u * pb + c.u * pc, v = a.v * pa + b.v * pb + c.v * pc;
-        Vec3 n = normalize(a.n * pa + b.n * pb + c.n * pc); if (dot(n, f) > 0) n = n * -1.f;  // double-sided
-        Vec3 alb = A ? sample(*A, u, v) : (mat ? Vec3{mat->baseFactor[0], mat->baseFactor[1], mat->baseFactor[2]} * .6f : Vec3{.6f, .6f, .6f}); alb = {alb.x * tint.x, alb.y * tint.y, alb.z * tint.z};
+        Vec3 n = normalize(a.n * pa + b.n * pb + c.n * pc); if (!ground && dot(n, (a.wp * pa + b.wp * pb + c.wp * pc) - cam.eye) > 0) n = n * -1.f;  // double-sided
+        Vec3 wp0 = a.wp * pa + b.wp * pb + c.wp * pc; Vec3 alb = ground ? terrainAlbedo(wp0.x, wp0.z, wp0.y) : A ? sample(*A, u, v) : (mat ? Vec3{mat->baseFactor[0], mat->baseFactor[1], mat->baseFactor[2]} * .6f : Vec3{.6f, .6f, .6f}); alb = {alb.x * tint.x, alb.y * tint.y, alb.z * tint.z};
         if (NM) { Vec3 t = normalize(a.t * pa + b.t * pb + c.t * pc); Vec3 s = sample(*NM, u, v); Vec3 tn = {s.x * 2 - 1, s.y * 2 - 1, s.z * 2 - 1}; Vec3 bt = cross(n, t) * a.tw; Vec3 nn = normalize(t * tn.x + bt * tn.y + n * tn.z); if (dot(nn, n) > 0.2f) n = nn; }
         float rough = MR ? sample(*MR, u, v).y : 0.7f, metal = MR ? sample(*MR, u, v).z : 0.f; Vec3 wp = a.wp * pa + b.wp * pb + c.wp * pc; Vec3 vd = normalize(cam.eye - wp), hv = normalize(L + vd);
-        float ndl = std::max(0.f, dot(n, L)), spec = std::pow(std::max(0.f, dot(n, hv)), 2.f / (rough * rough + .02f)) * (0.1f + 0.9f * metal) * (1 - rough * .6f);
-        float amb = 0.28f + 0.12f * n.y; Vec3 lit = {alb.x * (1 - metal * .8f) * (amb * .8f + ndl * 1.25f) + spec * (0.9f + metal * (alb.x - .9f)), alb.y * (1 - metal * .8f) * (amb + ndl * 1.1f) + spec * (0.85f + metal * (alb.y - .85f)), alb.z * (1 - metal * .8f) * (amb * 1.2f + ndl * .85f) + spec * (0.75f + metal * (alb.z - .75f))};
+        float sh = gEnv.sm ? softShadow(*gEnv.sm, wp, n, L) : 1.f; float ndl = std::max(0.f, dot(n, L)) * sh, spec = std::pow(std::max(0.f, dot(n, hv)), 2.f / (rough * rough + .02f)) * (0.1f + 0.9f * metal) * (1 - rough * .6f);
+        spec *= sh; float ao = ground ? 1.f : (gEnv.sm ? std::clamp(0.55f + 0.45f * sstep(0.f, 2.2f, wp.y - terrainHeight(wp.x, wp.z)), 0.f, 1.f) : 1.f); float amb = (0.26f + 0.14f * n.y) * ao; Vec3 lit = {alb.x * (1 - metal * .8f) * (amb * .8f + ndl * 1.25f) + spec * (0.9f + metal * (alb.x - .9f)), alb.y * (1 - metal * .8f) * (amb + ndl * 1.1f) + spec * (0.85f + metal * (alb.y - .85f)), alb.z * (1 - metal * .8f) * (amb * 1.2f + ndl * .85f) + spec * (0.75f + metal * (alb.z - .75f))};
+        if (gEnv.lights) lit = lit + softPointLights(wp, n, alb);
         if (EM && mat) { Vec3 e = sample(*EM, u, v); lit = lit + Vec3{e.x * mat->emissiveFactor[0], e.y * mat->emissiveFactor[1], e.z * mat->emissiveFactor[2]} * 2.2f; }
-        float fog = 1.f - std::exp(-z * 0.025f); lit = lit * (1 - fog) + Vec3{.55f, .68f, .6f} * fog;
+        float fog = 1.f - std::exp(-z * gEnv.fogDen); lit = lit * (1 - fog) + gEnv.fogCol * fog;
         fb.depth[di] = z; uint8_t* o = &fb.rgb[di * 3]; o[0] = uint8_t(255 * aces(lit.x)); o[1] = uint8_t(255 * aces(lit.y)); o[2] = uint8_t(255 * aces(lit.z));
       }
     }
   }
 }
 void drawModel(Framebuffer& fb, const Camera& cam, const Model& m, Vec3 off, float scale) {
-  Mat4 M = mIdent(); M[0] = M[5] = M[10] = scale; M[12] = off.x; M[13] = off.y; M[14] = off.z; drawInstance(fb, cam, m, M, {1, 1, 1}); }
+  Mat4 M = mIdent(); M[0] = M[5] = M[10] = scale; M[12] = off.x; M[13] = off.y; M[14] = off.z; drawInstance(fb, cam, m, M, {1, 1, 1}, false); }
 bool writePng(const std::string& path, const Framebuffer& fb) { return stbi_write_png(path.c_str(), fb.w, fb.h, 3, fb.rgb.data(), fb.w * 3) != 0; }
 }  // namespace isekai

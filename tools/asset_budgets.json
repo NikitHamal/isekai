@@ -1,8 +1,4 @@
 {
- "env_ancient_root_archway": {
-  "cat": "environment",
-  "min_tris": 8000
- },
  "env_mossy_forest_cliff_modular": {
   "cat": "environment",
   "min_tris": 6500
@@ -23,10 +19,6 @@
   "cat": "characters",
   "min_tris": 10000
  },
- "chr_ally_lumina_spirit_fairy": {
-  "cat": "characters",
-  "min_tris": 3500
- },
  "chr_ally_sylphie_elf_mage": {
   "cat": "characters",
   "min_tris": 10000
@@ -41,7 +33,7 @@
  },
  "bld_valoria_adventurer_guild": {
   "cat": "buildings",
-  "min_tris": 8500
+  "min_tris": 9000
  },
  "bld_royal_citadel_keep": {
   "cat": "buildings",
@@ -61,7 +53,7 @@
  },
  "veh_merchant_covered_wagon": {
   "cat": "vehicles",
-  "min_tris": 6500
+  "min_tris": 7000
  },
  "veh_royal_war_chariot": {
   "cat": "vehicles",
@@ -97,7 +89,7 @@
  },
  "mon_orc_warlord_berserker": {
   "cat": "monsters",
-  "min_tris": 10000
+  "min_tris": 9000
  },
  "mon_ignis_elder_wyvern": {
   "cat": "monsters",
@@ -139,10 +131,6 @@
   "cat": "weapons",
   "min_tris": 4000
  },
- "prp_crimson_heart_container": {
-  "cat": "props",
-  "min_tris": 3000
- },
  "prp_ornate_treasure_chest": {
   "cat": "props",
   "min_tris": 4000
@@ -151,12 +139,24 @@
   "cat": "props",
   "min_tris": 3000
  },
- "prp_hanging_acorn_amber_lantern": {
-  "cat": "props",
-  "min_tris": 3500
- },
  "prp_medieval_market_barrels_crates": {
   "cat": "props",
   "min_tris": 4500
+ },
+ "env_valoria_stone_town_wall": {
+  "cat": "environment",
+  "min_tris": 8000
+ },
+ "chr_ally_mira_town_healer": {
+  "cat": "characters",
+  "min_tris": 9000
+ },
+ "prp_merchant_market_stall": {
+  "cat": "props",
+  "min_tris": 3000
+ },
+ "prp_iron_street_lamp_post": {
+  "cat": "props",
+  "min_tris": 3500
  }
 }

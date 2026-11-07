@@ -4,7 +4,7 @@ Pipeline: `tools/assets/gen_<slug>.py` -> `assets/models/<category>/<slug>.glb` 
 
 
 ## 1. Environment (`assets/models/environment/`)
-- [x] `env_ancient_root_archway` (>= 8,000 tris)
+- [ ] `env_valoria_stone_town_wall` (>= 8,000 tris)
 - [x] `env_mossy_forest_cliff_modular` (>= 6,500 tris)
 - [ ] `env_mana_shrine_waystone` (>= 5,000 tris)
 - [ ] `env_ancient_bridge_ruins` (>= 7,000 tris)
@@ -12,7 +12,7 @@ Pipeline: `tools/assets/gen_<slug>.py` -> `assets/models/<category>/<slug>.glb` 
 
 ## 2. Characters (`assets/models/characters/`)
 - [x] `chr_hero_kaelen_adventurer` (>= 10,000 tris)
-- [x] `chr_ally_lumina_spirit_fairy` (>= 3,500 tris)
+- [ ] `chr_ally_mira_town_healer` (>= 9,000 tris)
 - [ ] `chr_ally_sylphie_elf_mage` (>= 10,000 tris)
 - [ ] `chr_ally_garrick_royal_paladin` (>= 10,000 tris)
 - [ ] `chr_ally_lyra_beastkin_rogue` (>= 9,500 tris)
@@ -53,8 +53,8 @@ Pipeline: `tools/assets/gen_<slug>.py` -> `assets/models/<category>/<slug>.glb` 
 - [ ] `wpn_dwarven_runic_warhammer` (>= 4,000 tris)
 
 ## 8. Props (`assets/models/props/`)
-- [x] `prp_crimson_heart_container` (>= 3,000 tris)
+- [ ] `prp_merchant_market_stall` (>= 3,000 tris)
 - [x] `prp_ornate_treasure_chest` (>= 4,000 tris)
 - [x] `prp_wooden_wayfinder_signpost` (>= 3,000 tris)
-- [x] `prp_hanging_acorn_amber_lantern` (>= 3,500 tris)
+- [ ] `prp_iron_street_lamp_post` (>= 3,500 tris)
 - [ ] `prp_medieval_market_barrels_crates` (>= 4,500 tris)

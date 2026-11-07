@@ -23,6 +23,14 @@ typedef ptrdiff_t GLsizeiptr_; typedef char GLchar_;
 #define GL_TEXTURE0 0x84C0
 #define GL_CLAMP_TO_EDGE 0x812F
 #define GL_MULTISAMPLE 0x809D
+#define GL_FRAMEBUFFER 0x8D40
+#define GL_DEPTH_ATTACHMENT 0x8D00
+#define GL_FRAMEBUFFER_COMPLETE 0x8CD5
+#define GL_DEPTH_COMPONENT24 0x81A6
+#define GL_CLAMP_TO_BORDER 0x812D
+#ifndef GL_TEXTURE_BORDER_COLOR
+#define GL_TEXTURE_BORDER_COLOR 0x1004
+#endif
 #define ISEKAI_GL_FUNCS(X) \
   X(GLuint, CreateShader, (GLenum)) X(void, ShaderSource, (GLuint, GLsizei, const GLchar_* const*, const GLint*)) \
   X(void, CompileShader, (GLuint)) X(void, GetShaderiv, (GLuint, GLenum, GLint*)) X(void, GetShaderInfoLog, (GLuint, GLsizei, GLsizei*, GLchar_*)) \
@@ -34,7 +42,8 @@ typedef ptrdiff_t GLsizeiptr_; typedef char GLchar_;
   X(void, GenVertexArrays, (GLsizei, GLuint*)) X(void, BindVertexArray, (GLuint)) X(void, GenBuffers, (GLsizei, GLuint*)) \
   X(void, BindBuffer, (GLenum, GLuint)) X(void, BufferData, (GLenum, GLsizeiptr_, const void*, GLenum)) X(void, BufferSubData, (GLenum, GLsizeiptr_, GLsizeiptr_, const void*)) \
   X(void, EnableVertexAttribArray, (GLuint)) X(void, VertexAttribPointer, (GLuint, GLint, GLenum, GLboolean, GLsizei, const void*)) \
-  X(void, ActiveTexture, (GLenum)) X(void, GenerateMipmap, (GLenum))
+  X(void, ActiveTexture, (GLenum)) X(void, GenerateMipmap, (GLenum)) \
+  X(void, GenFramebuffers, (GLsizei, GLuint*)) X(void, BindFramebuffer, (GLenum, GLuint)) X(void, FramebufferTexture2D, (GLenum, GLenum, GLenum, GLuint, GLint)) X(GLenum, CheckFramebufferStatus, (GLenum))
 #define X(r, n, a) inline r (APIENTRY* gl##n) a = nullptr;
 ISEKAI_GL_FUNCS(X)
 #undef X
