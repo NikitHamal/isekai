@@ -43,11 +43,20 @@ static void rigCharacterParts(Model& out) {
   std::vector<Primitive> rigged;
   for (auto& P : out.prims) {
     int fixed = -1; const std::string& n = P.node;
-    if (hasSub(n, "cloak") || hasSub(n, "cape") || hasSub(n, "lining")) fixed = PART_CLOAK;
+    if (n.rfind("torso", 0) == 0) fixed = PART_TORSO;
+    else if (n.rfind("head", 0) == 0) fixed = PART_HEAD;
+    else if (n.rfind("cloak", 0) == 0) fixed = PART_CLOAK;
+    else if (n.rfind("arm_l", 0) == 0 || n.rfind("wing_l", 0) == 0) fixed = PART_ARM_L;
+    else if (n.rfind("arm_r", 0) == 0 || n.rfind("wing_r", 0) == 0) fixed = PART_ARM_R;
+    else if (n.rfind("leg_l", 0) == 0) fixed = PART_LEG_L;
+    else if (n.rfind("leg_r", 0) == 0) fixed = PART_LEG_R;
+    else if (n.rfind("weapon_r", 0) == 0) fixed = PART_WEAPON_R;
+    else if (n.rfind("jaw", 0) == 0 || n.rfind("tail", 0) == 0) fixed = PART_JAW_OR_TAIL;
+    else if (hasSub(n, "cloak") || hasSub(n, "cape") || hasSub(n, "lining")) fixed = PART_CLOAK;
     else if (isWpnNode(n)) fixed = PART_WEAPON_R;
     else if (hasSub(n, "buckler") || hasSub(n, "shield") || hasSub(n, "glyph")) fixed = PART_ARM_L;
     else if (hasSub(n, "hair") || hasSub(n, "eyes") || hasSub(n, "helm") || hasSub(n, "visor") || hasSub(n, "crest") || hasSub(n, "plume") || hasSub(n, "horns") || hasSub(n, "tusks") || hasSub(n, "ears")) fixed = PART_HEAD;
-    if (fixed >= 0) { P.partId = fixed; P.pivot = pivotFor(fixed); rigged.push_back(std::move(P)); continue; }
+    if (fixed >= 0) { P.partId = fixed; if (dot(P.pivot, P.pivot) < 1e-4f) P.pivot = pivotFor(fixed); rigged.push_back(std::move(P)); continue; }
     std::vector<uint32_t> buckets[PART_COUNT];
     for (size_t k = 0; k + 2 < P.idx.size(); k += 3) {
       uint32_t ia = P.idx[k], ib = P.idx[k + 1], ic = P.idx[k + 2];
@@ -113,7 +122,7 @@ bool loadGlb(const std::string& path, Model& out, std::string& err) {
     Mat4 W; cgltf_node_transform_world(&n, W.data());
     for (size_t pi = 0; pi < n.mesh->primitives_count; pi++) {
       const cgltf_primitive& pr = n.mesh->primitives[pi]; if (pr.type != cgltf_primitive_type_triangles || !pr.indices) continue;
-      Primitive P; P.node = n.name ? n.name : ""; P.material = pr.material ? int(pr.material - d->materials) : -1;
+      Primitive P; P.node = n.name ? n.name : ""; P.pivot = {W[12], W[13], W[14]}; P.material = pr.material ? int(pr.material - d->materials) : -1;
       for (size_t ai = 0; ai < pr.attributes_count; ai++) {
         const cgltf_attribute& a = pr.attributes[ai]; size_t cnt = a.data->count, nc = cgltf_num_components(a.data->type);
         std::vector<float> buf(cnt * nc); cgltf_accessor_unpack_floats(a.data, buf.data(), buf.size());

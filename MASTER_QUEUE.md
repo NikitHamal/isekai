@@ -7,7 +7,7 @@
     2. Replace the boxy `env_mossy_forest_cliff_modular.glb` using **real Blender (`bpy`)** (`DISPLACE` Voronoi/Musgrave rock strata + `BEVEL` + `SUBSURF` + mossy ledge overhangs—zero rectangular boxes or stuck-on ovals) and build `env_sacred_world_tree_canopy.glb` (`>= 10,000` tris) in Blender with gnarled root splines and layered leaf canopies.
     3. Populate the Valoria hills and road verges in `src/game_world.cpp` & `src/gl_renderer.cpp` with Blender-modeled **Pine & Oak Trees**, **Craggy Boulders**, and **Thousands of Wind-Swaying 3D Grass Blade Clusters**.
 
-- [ ] **Q02 — Remaster Hero, Paladin, Orc, Direwolf & Goblin in Real Blender with Articulated Limb Nodes + C++ Skeletal Animator (`src/animator.hpp`)**
+- [x] **Q02 — Remaster Hero, Paladin, Orc, Direwolf & Goblin in Real Blender with Articulated Limb Nodes + C++ Skeletal Animator (`src/animator.hpp`)**
   - Rebuild `chr_hero_kaelen_adventurer.glb`, `chr_ally_garrick_royal_paladin.glb`, `mon_orc_warlord_berserker.glb`, `mon_shadow_direwolf_alpha.glb`, and `mon_forest_goblin_raider.glb` in **real Blender (`bpy`)** using `MIRROR` + `SUBSURF` + `SOLIDIFY` armor/cloth modeling and separate named limb objects (`torso`, `head`, `cloak`, `arm_l`, `arm_r`, `leg_l`, `leg_r`, `weapon_r`, `jaw`, `tail`).
   - Update `include/isekai/model.h`, `src/gltf_loader.cpp`, and `src/animator.hpp` so `cgltf` preserves each node's `partId` and pivot, animating Idle, Walk/Sprint, 3-Hit Sword Combo, Magic Cast, Dodge Roll, and Monster gait/attacks.
 

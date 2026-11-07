@@ -250,3 +250,98 @@ def export_blender_glb(root_node, out_path, tex_size=512, node_modifiers=None, p
 
     _walk(root_node)
     return export_blender_scene(out_path)
+
+def export_articulated_character_glb(root_node, out_path, tex_size=512, is_quadruped=False, node_modifiers=None):
+    """Build an articulated character/monster in Blender with separate named limb objects & joint origins and export to GLB."""
+    reset_blender_scene()
+    node_modifiers = node_modifiers or {}
+    flat_nodes = []
+    def _collect(n):
+        if n.mesh is not None and n.material is not None and len(n.mesh.F) > 0:
+            flat_nodes.append(n)
+        for ch in n.children:
+            _collect(ch)
+    _collect(root_node)
+
+    all_v = np.vstack([n.mesh.V for n in flat_nodes])
+    bmin = all_v.min(axis=0)
+    bmax = all_v.max(axis=0)
+    H = max(float(bmax[1] - bmin[1]), 0.01)
+    W = max(float(bmax[0] - bmin[0]), 0.01)
+    L = max(float(bmax[2] - bmin[2]), 0.01)
+    zc = 0.5 * float(bmin[2] + bmax[2])
+
+    wpn_keys = ("sword", "blade", "grip", "runes", "axe", "cleaver", "hammer", "staff", "bow", "dagger", "halberd", "crossbow")
+    wx_vals = [n.mesh.V[:, 0].mean() for n in flat_nodes if any(k in n.name for k in wpn_keys)]
+    w_side = (1.0 if np.mean(wx_vals) >= 0.0 else -1.0) if wx_vals else -1.0
+
+    def _pivot_for(part):
+        if is_quadruped:
+            if part == "head": return (0.0, float(bmin[1]) + 0.65 * H, zc + 0.24 * L)
+            if part == "leg_l": return (0.0, float(bmin[1]) + 0.50 * H, zc + 0.24 * L)
+            if part == "leg_r": return (0.0, float(bmin[1]) + 0.50 * H, zc - 0.24 * L)
+            if part in ("jaw", "tail"): return (0.0, float(bmin[1]) + 0.58 * H, zc - 0.30 * L)
+            return (0.0, float(bmin[1]) + 0.52 * H, zc)
+        if part == "head": return (0.0, float(bmin[1]) + 0.80 * H, 0.0)
+        if part == "cloak": return (0.0, float(bmin[1]) + 0.82 * H, -0.05 * L)
+        if part in ("arm_r", "weapon_r"): return (w_side * 0.19 * W, float(bmin[1]) + 0.76 * H, 0.0)
+        if part == "arm_l": return (-w_side * 0.19 * W, float(bmin[1]) + 0.76 * H, 0.0)
+        if part == "leg_l": return (0.08 * W, float(bmin[1]) + 0.46 * H, 0.0)
+        if part == "leg_r": return (-0.08 * W, float(bmin[1]) + 0.46 * H, 0.0)
+        return (0.0, float(bmin[1]) + 0.46 * H, 0.0)
+
+    for n in flat_nodes:
+        nm = n.name.lower()
+        mods = node_modifiers.get(n.name, ())
+        fixed = None
+        for pfx in ("torso", "head", "cloak", "arm_l", "arm_r", "leg_l", "leg_r", "weapon_r", "jaw", "tail"):
+            if nm.startswith(pfx + "_") or nm == pfx:
+                fixed = pfx
+                break
+        if fixed is None:
+            if any(k in nm for k in ("cloak", "cape", "lining")): fixed = "cloak"
+            elif any(k in nm for k in wpn_keys): fixed = "weapon_r"
+            elif any(k in nm for k in ("buckler", "shield", "glyph", "quiver")): fixed = "arm_l"
+            elif any(k in nm for k in ("hair", "eyes", "helm", "visor", "crest", "plume", "horns", "tusks", "ears", "hat", "hood")): fixed = "head"
+        if fixed is not None:
+            obj_name = n.name if n.name.startswith(fixed) else f"{fixed}_{n.name}"
+            add_mesh_object(obj_name, n.mesh, n.material, modifiers=mods, pivot_gltf=_pivot_for(fixed), tex_size=tex_size)
+            continue
+
+        # Partition multi-limb body/armor mesh into anatomical Blender limb sub-objects
+        V, F, UV = n.mesh.V, n.mesh.F, n.mesh.UV
+        fc = V[F].mean(axis=1)
+        ny = (fc[:, 1] - bmin[1]) / H
+        nz = (fc[:, 2] - zc) / L
+        parts_map = {}
+        for fi in range(len(F)):
+            if is_quadruped:
+                if nz[fi] < -0.28: p = "tail"
+                elif ny[fi] < 0.48: p = "leg_l" if nz[fi] >= 0.0 else "leg_r"
+                elif nz[fi] > 0.25: p = "head"
+                else: p = "torso"
+            else:
+                if ny[fi] < 0.45: p = "leg_l" if fc[fi, 0] >= 0.0 else "leg_r"
+                elif ny[fi] >= 0.81: p = "head"
+                elif abs(fc[fi, 0]) > 0.20 * W: p = "arm_r" if (fc[fi, 0] * w_side > 0.0) else "arm_l"
+                else: p = "torso"
+            parts_map.setdefault(p, []).append(fi)
+
+        for p, f_indices in parts_map.items():
+            sub_F = F[np.array(f_indices, dtype=np.int64)]
+            used = np.unique(sub_F)
+            remap = np.zeros(len(V), dtype=np.int64)
+            remap[used] = np.arange(len(used))
+            sub_mesh = Mesh(V[used], remap[sub_F], UV[used])
+            add_mesh_object(f"{p}_{n.name}", sub_mesh, n.material, modifiers=mods, pivot_gltf=_pivot_for(p), tex_size=tex_size)
+
+    return export_blender_scene(out_path)
+
+def load_asset_root(mod_name):
+    """Import an asset module from tools/assets/ and return its root Node."""
+    m = __import__(f"assets.{mod_name}", fromlist=["*"])
+    return getattr(m, "root_node", None) or getattr(m, "root")
+
+def cone(r, h, pos=(0, 0, 0), sides=12, rot=(0, 0, 0), d=0.8):
+    """Tapered cone mesh helper."""
+    return cyl_tri(r, h, pos, d=d, sides=sides, r2=0.002, rot=rot)
